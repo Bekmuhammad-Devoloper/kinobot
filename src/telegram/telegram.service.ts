@@ -7,10 +7,14 @@ import { Telegraf, Context } from 'telegraf';
 import axios from 'axios';
 import { User, Admin, Movie, Channel, UserView } from '../database/entities';
 
+export interface MovieSessionData extends Partial<Movie> {
+  auto_thumbnail_file_id?: string; // Video dan avtomatik olingan thumbnail
+}
+
 export interface SessionData {
   scene?: string;
   step?: number;
-  movieData?: Partial<Movie>;
+  movieData?: MovieSessionData;
   channelData?: Partial<Channel>;
   editMovieId?: number;
   editMovieData?: Partial<Movie>;

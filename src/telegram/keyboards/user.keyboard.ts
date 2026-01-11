@@ -49,4 +49,25 @@ export const UserKeyboard = {
       [Markup.button.callback('⬅️ Orqaga', 'back_to_menu')],
     ]);
   },
+
+  // Premyera kinolar uchun carousel
+  premiereCarousel: (movies: any[], currentIndex: number = 0) => {
+    const movie = movies[currentIndex];
+    const buttons = [];
+    
+    // Navigation buttons
+    const navButtons = [];
+    if (currentIndex > 0) {
+      navButtons.push(Markup.button.callback('◀️', `premiere_prev_${currentIndex}`));
+    }
+    navButtons.push(Markup.button.callback(`${currentIndex + 1}/${movies.length}`, 'noop'));
+    if (currentIndex < movies.length - 1) {
+      navButtons.push(Markup.button.callback('▶️', `premiere_next_${currentIndex}`));
+    }
+    
+    buttons.push(navButtons);
+    buttons.push([Markup.button.callback('▶️ Ko\'rish', `watch_premiere_${movie.id}`)]);
+    
+    return Markup.inlineKeyboard(buttons);
+  },
 };
