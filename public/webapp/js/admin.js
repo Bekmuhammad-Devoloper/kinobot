@@ -116,29 +116,64 @@ function renderDashboard() {
     container.innerHTML = `
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon">👥</div>
+                <div class="stat-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                </div>
                 <div class="stat-value">${formatNumber(stats.totalUsers || 0)}</div>
                 <div class="stat-label">Jami foydalanuvchilar</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🎬</div>
+                <div class="stat-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+                        <line x1="7" y1="2" x2="7" y2="22"/>
+                        <line x1="17" y1="2" x2="17" y2="22"/>
+                        <line x1="2" y1="12" x2="22" y2="12"/>
+                        <line x1="2" y1="7" x2="7" y2="7"/>
+                        <line x1="2" y1="17" x2="7" y2="17"/>
+                        <line x1="17" y1="17" x2="22" y2="17"/>
+                        <line x1="17" y1="7" x2="22" y2="7"/>
+                    </svg>
+                </div>
                 <div class="stat-value">${formatNumber(stats.totalMovies || 0)}</div>
                 <div class="stat-label">Jami kinolar</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">📺</div>
+                <div class="stat-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                        <rect x="2" y="7" width="20" height="15" rx="2" ry="2"/>
+                        <polyline points="17 2 12 7 7 2"/>
+                    </svg>
+                </div>
                 <div class="stat-value">${formatNumber(stats.totalChannels || 0)}</div>
                 <div class="stat-label">Kanallar</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">👁</div>
+                <div class="stat-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </div>
                 <div class="stat-value">${formatNumber(stats.totalViews || 0)}</div>
                 <div class="stat-label">Jami ko'rishlar</div>
             </div>
         </div>
         
         <div class="section">
-            <h3 class="section-title">📊 Bugungi statistika</h3>
+            <h3 class="section-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+                Bugungi statistika
+            </h3>
             <div class="info-list">
                 <div class="info-item">
                     <span class="info-label">Yangi foydalanuvchilar</span>
@@ -340,19 +375,25 @@ async function addChannel() {
                 'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || ''
             },
             body: JSON.stringify({
-                title,
-                chatId,
-                url: url || null,
-                username: chatId.startsWith('@') ? chatId : null
+                channel_title: title,
+                channel_id: chatId,
+                invite_link: url || null,
+                channel_username: chatId.startsWith('@') ? chatId.substring(1) : null,
+                is_active: true
             })
         });
         
-        if (response.ok) {
+        const result = await response.json();
+        
+        if (result.success) {
             closeAddChannelModal();
             await loadChannels();
             showToast('Kanal qo\'shildi');
+        } else {
+            showToast(result.message || 'Xatolik yuz berdi', 'error');
         }
     } catch (error) {
+        console.error('Error adding channel:', error);
         showToast('Xatolik yuz berdi', 'error');
     }
 }

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { Admin, Movie, User, UserView } from '../database/entities';
+import { Admin, Movie, User, UserView, Channel } from '../database/entities';
 
 @Injectable()
 export class AdminService {
@@ -13,6 +13,7 @@ export class AdminService {
     @InjectRepository(Movie) private readonly movieRepo: Repository<Movie>,
     @InjectRepository(User) private readonly userRepo: Repository<User>,
     @InjectRepository(UserView) private readonly userViewRepo: Repository<UserView>,
+    @InjectRepository(Channel) private readonly channelRepo: Repository<Channel>,
     private readonly configService: ConfigService,
   ) {
     const adminIdsStr = this.configService.get('ADMIN_IDS', '');
@@ -29,12 +30,15 @@ export class AdminService {
     totalMovies: number;
     premiereMovies: number;
     totalViews: number;
-    todayNewUsers: number;
+    todayUsers: number;
+    todayViews: number;
+    totalChannels: number;
   }> {
     const totalUsers = await this.userRepo.count();
     const subscribedUsers = await this.userRepo.count({ where: { is_subscribed: true } });
     const totalMovies = await this.movieRepo.count();
     const premiereMovies = await this.movieRepo.count({ where: { is_premiere: true } });
+    const totalChannels = await this.channelRepo.count();
 
     const viewsResult = await this.movieRepo
       .createQueryBuilder('movie')
@@ -44,9 +48,14 @@ export class AdminService {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayNewUsers = await this.userRepo
+    const todayUsers = await this.userRepo
       .createQueryBuilder('user')
       .where('user.created_at >= :today', { today })
+      .getCount();
+    
+    const todayViews = await this.userViewRepo
+      .createQueryBuilder('view')
+      .where('view.viewed_at >= :today', { today })
       .getCount();
 
     return {
@@ -55,7 +64,9 @@ export class AdminService {
       totalMovies,
       premiereMovies,
       totalViews,
-      todayNewUsers,
+      todayUsers,
+      todayViews,
+      totalChannels,
     };
   }
 
