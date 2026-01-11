@@ -285,10 +285,14 @@ function renderChannels() {
             
             // Kanal nomidan birinchi harfni olish
             const channelInitial = channelTitle.charAt(0).toUpperCase();
+            // Kanal rasmi URL
+            const channelPhotoUrl = `/api/photo/channel/${encodeURIComponent(channelId)}`;
             
             html += `
                 <div class="channel-item ${isActive ? 'active' : 'inactive'}">
-                    <div class="channel-avatar" style="background: linear-gradient(135deg, #${getColorFromId(channel.id)} 0%, #${getColorFromId(channel.id + 5)} 100%);">
+                    <img src="${channelPhotoUrl}" class="channel-avatar-img" alt="${escapeHtml(channelTitle)}" 
+                        onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <div class="channel-avatar fallback" style="display:none; background: linear-gradient(135deg, #${getColorFromId(channel.id)} 0%, #${getColorFromId(channel.id + 5)} 100%);">
                         ${channelInitial}
                     </div>
                     <div class="channel-info">
@@ -531,19 +535,16 @@ function renderUsers(total) {
             const fullName = user.full_name || user.fullName || 'Noma\'lum';
             const telegramId = user.telegram_id || user.telegramId;
             const isBanned = user.is_banned || user.isBanned;
-            const photoUrl = user.photo_url || user.photoUrl;
+            // Haqiqiy rasm URL
+            const userPhotoUrl = `/api/photo/user/${telegramId}`;
             
             html += `
                 <div class="user-item ${isBanned ? 'banned' : ''}">
-                    ${photoUrl ? 
-                        `<img src="${photoUrl}" class="user-avatar-img" alt="${escapeHtml(fullName)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                        <div class="user-avatar" style="display:none; background: linear-gradient(135deg, #${getColorFromId(telegramId)} 0%, #${getColorFromId(telegramId + 1)} 100%);">
-                            ${getInitials(fullName)}
-                        </div>` :
-                        `<div class="user-avatar" style="background: linear-gradient(135deg, #${getColorFromId(telegramId)} 0%, #${getColorFromId(telegramId + 1)} 100%);">
-                            ${getInitials(fullName)}
-                        </div>`
-                    }
+                    <img src="${userPhotoUrl}" class="user-avatar-img" alt="${escapeHtml(fullName)}" 
+                        onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <div class="user-avatar fallback" style="display:none; background: linear-gradient(135deg, #${getColorFromId(telegramId)} 0%, #${getColorFromId(telegramId + 1)} 100%);">
+                        ${getInitials(fullName)}
+                    </div>
                     <div class="user-info">
                         <div class="user-name">
                             ${escapeHtml(fullName)}

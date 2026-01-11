@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TelegramUpdate } from './telegram.update';
 import { TelegramService } from './telegram.service';
+import { PhotoProxyController } from './photo-proxy.controller';
 import { User, Admin, Movie, Channel, UserView } from '../database/entities';
 import { UsersModule } from '../users/users.module';
 import { MoviesModule } from '../movies/movies.module';
@@ -14,6 +15,7 @@ import { ChannelsModule } from '../channels/channels.module';
     forwardRef(() => MoviesModule),
     forwardRef(() => ChannelsModule),
   ],
+  controllers: [PhotoProxyController],
   providers: [TelegramUpdate, TelegramService],
   exports: [TelegramService],
 })

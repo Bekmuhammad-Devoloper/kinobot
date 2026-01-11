@@ -52,6 +52,43 @@ export class TelegramService {
     return null;
   }
 
+  async getUserPhotoBuffer(telegramId: number): Promise<Buffer | null> {
+    try {
+      const photos = await this.bot.telegram.getUserProfilePhotos(telegramId, 0, 1);
+      if (photos.total_count > 0 && photos.photos[0]?.length > 0) {
+        const fileId = photos.photos[0][photos.photos[0].length - 1].file_id;
+        const fileLink = await this.bot.telegram.getFileLink(fileId);
+        
+        const response = await fetch(fileLink.toString());
+        if (response.ok) {
+          const arrayBuffer = await response.arrayBuffer();
+          return Buffer.from(arrayBuffer);
+        }
+      }
+    } catch (error) {
+      console.error('Error getting user photo buffer:', error);
+    }
+    return null;
+  }
+
+  async getChannelPhotoBuffer(channelId: string): Promise<Buffer | null> {
+    try {
+      const chat = await this.bot.telegram.getChat(channelId);
+      if (chat.photo) {
+        const fileLink = await this.bot.telegram.getFileLink(chat.photo.big_file_id);
+        
+        const response = await fetch(fileLink.toString());
+        if (response.ok) {
+          const arrayBuffer = await response.arrayBuffer();
+          return Buffer.from(arrayBuffer);
+        }
+      }
+    } catch (error) {
+      console.error('Error getting channel photo buffer:', error);
+    }
+    return null;
+  }
+
   async findOrCreateUser(telegramId: number, username?: string, fullName?: string): Promise<User> {
     let user = await this.userRepo.findOne({ where: { telegram_id: telegramId } });
     const isNewUser = !user;
