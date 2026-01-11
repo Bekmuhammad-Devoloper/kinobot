@@ -105,6 +105,9 @@ function createMovieCard(movie, index) {
                 <span class="movie-views">👁 ${formatNumber(movie.viewsCount || 0)}</span>
                 ${duration}
             </div>
+            <div class="movie-code-row">
+                <span class="movie-code">📋 ${movie.code}</span>
+            </div>
             <button class="btn-watch" onclick="event.stopPropagation(); watchMovie('${movie.code}')">
                 ▶️ Ko'rish
             </button>

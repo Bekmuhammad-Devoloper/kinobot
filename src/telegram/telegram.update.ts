@@ -98,114 +98,16 @@ export class TelegramUpdate {
       return;
     }
 
-    // Birinchi kinoni ko'rsatish
-    await this.showPremiereMovie(ctx, movies, 0);
-  }
-
-  // Premyera kinoni ko'rsatish
-  private async showPremiereMovie(ctx: BotContext, movies: any[], index: number, editMessage: boolean = false) {
-    const movie = movies[index];
-    
-    const caption = 
-      `🎬 <b>${movie.title}</b>\n\n` +
-      `${movie.description || 'Tavsif yo\'q'}\n\n` +
-      `📊 Ko'rishlar: ${movie.views_count || 0}\n` +
-      `⏱ Davomiyligi: ${movie.duration || 'Noma\'lum'}`;
-    
-    const keyboard = UserKeyboard.premiereCarousel(movies, index);
-    
-    try {
-      if (editMessage && ctx.callbackQuery?.message) {
-        // Agar thumbnail bo'lsa, rasm bilan edit qilish
-        if (movie.thumbnail_file_id) {
-          await ctx.editMessageMedia(
-            {
-              type: 'photo',
-              media: movie.thumbnail_file_id,
-              caption,
-              parse_mode: 'HTML',
-            },
-            keyboard
-          );
-        } else {
-          await ctx.editMessageCaption(caption, { parse_mode: 'HTML', ...keyboard });
-        }
-      } else {
-        // Yangi xabar yuborish
-        if (movie.thumbnail_file_id) {
-          await ctx.replyWithPhoto(movie.thumbnail_file_id, {
-            caption,
-            parse_mode: 'HTML',
-            ...keyboard,
-          });
-        } else {
-          await ctx.reply(caption, { parse_mode: 'HTML', ...keyboard });
-        }
+    // Web App orqali ko'rsatish
+    await ctx.reply(
+      '🎬 <b>Premyera Kinolar</b>\n\n' +
+      `📊 Jami: ${movies.length} ta kino\n\n` +
+      'Quyidagi tugmani bosib premyera kinolarni ko\'ring:',
+      {
+        parse_mode: 'HTML',
+        ...UserKeyboard.premiereWebApp(`${this.webAppUrl}/premiere`)
       }
-    } catch (error) {
-      console.error('Error showing premiere movie:', error);
-      // Fallback: oddiy text xabar
-      await ctx.reply(caption, { parse_mode: 'HTML', ...keyboard });
-    }
-  }
-
-  // Premyera carousel navigation
-  @Action(/^premiere_(prev|next)_(\d+)$/)
-  async onPremiereNav(@Ctx() ctx: BotContext) {
-    await ctx.answerCbQuery();
-    
-    const match = ctx.callbackQuery && 'data' in ctx.callbackQuery 
-      ? ctx.callbackQuery.data.match(/^premiere_(prev|next)_(\d+)$/)
-      : null;
-    
-    if (!match) return;
-    
-    const direction = match[1];
-    const currentIndex = parseInt(match[2]);
-    const movies = await this.telegramService.getPremiereMovies();
-    
-    const newIndex = direction === 'prev' ? currentIndex - 1 : currentIndex + 1;
-    
-    if (newIndex >= 0 && newIndex < movies.length) {
-      await this.showPremiereMovie(ctx, movies, newIndex, true);
-    }
-  }
-
-  // No operation - for page indicators
-  @Action('noop')
-  async onNoop(@Ctx() ctx: BotContext) {
-    await ctx.answerCbQuery();
-  }
-
-  // Premyera kinoni ko'rish
-  @Action(/^watch_premiere_(\d+)$/)
-  async onWatchPremiere(@Ctx() ctx: BotContext) {
-    await ctx.answerCbQuery('📥 Kino yuklanmoqda...');
-    
-    const match = ctx.callbackQuery && 'data' in ctx.callbackQuery 
-      ? ctx.callbackQuery.data.match(/^watch_premiere_(\d+)$/)
-      : null;
-    
-    if (!match) return;
-    
-    const movieId = parseInt(match[1]);
-    const movie = await this.telegramService.getMovieById(movieId);
-    
-    if (!movie) {
-      await ctx.reply('❌ Kino topilmadi.');
-      return;
-    }
-
-    // Ko'rishlar sonini oshirish va user view qo'shish
-    if (ctx.from) {
-      await this.telegramService.incrementMovieViews(movie.id, ctx.from.id);
-    }
-    
-    // Video yuborish
-    await ctx.replyWithVideo(movie.file_id, {
-      caption: `🎬 <b>${movie.title}</b>\n\n${movie.description || ''}`,
-      parse_mode: 'HTML',
-    });
+    );
   }
 
   // ============ SEARCH BY CODE ============
