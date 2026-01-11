@@ -2,7 +2,7 @@ import { Update, Ctx, Start, On, Hears, Action, Command } from 'nestjs-telegraf'
 import { ConfigService } from '@nestjs/config';
 import { TelegramService, BotContext } from './telegram.service';
 import { UserKeyboard, AdminKeyboard } from './keyboards';
-import { Message } from 'telegraf/types';
+import { Message, Update as TelegrafUpdate } from 'telegraf/types';
 
 @Update()
 export class TelegramUpdate {
@@ -599,6 +599,58 @@ export class TelegramUpdate {
     
     await ctx.answerCbQuery('❌ Premyeradan olib tashlandi');
     await ctx.deleteMessage();
+  }
+
+  // ============ WEB APP DATA HANDLER ============
+  @On('message')
+  async onMessage(@Ctx() ctx: BotContext) {
+    const user = ctx.from;
+    if (!user) return;
+
+    const message = ctx.message as any;
+    
+    // WebApp dan kelgan ma'lumotlarni tekshirish
+    if (message.web_app_data) {
+      try {
+        const data = JSON.parse(message.web_app_data.data);
+        
+        if (data.action === 'watch' && data.movieCode) {
+          // Check subscription
+          const { subscribed, unsubscribedChannels } = await this.telegramService.checkUserSubscription(user.id);
+          
+          if (!subscribed) {
+            await ctx.reply(
+              '⚠️ Kinoni ko\'rish uchun barcha kanallarga obuna bo\'ling:',
+              UserKeyboard.subscriptionButtons(unsubscribedChannels)
+            );
+            return;
+          }
+
+          const movie = await this.telegramService.getMovieByCode(data.movieCode);
+          
+          if (!movie) {
+            await ctx.reply('❌ Kino topilmadi!');
+            return;
+          }
+
+          // Send video
+          try {
+            await ctx.replyWithVideo(movie.file_id, {
+              caption: `🎬 ${movie.title}\n\n${movie.description || ''}\n\n👁 Ko'rishlar: ${movie.views_count}`,
+            });
+
+            // Increment views
+            await this.telegramService.incrementMovieViews(movie.id, user.id);
+          } catch (error) {
+            console.error('Error sending video:', error);
+            await ctx.reply('❌ Video yuborishda xatolik yuz berdi.');
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing web app data:', error);
+      }
+      return;
+    }
   }
 
   // ============ TEXT MESSAGE HANDLER ============
