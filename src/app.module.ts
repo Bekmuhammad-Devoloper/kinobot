@@ -21,7 +21,7 @@ import { WebappModule } from './webapp/webapp.module';
       envFilePath: '.env',
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'public'),
+      rootPath: join(process.cwd(), 'public', 'webapp'),
       serveRoot: '/webapp',
     }),
     TypeOrmModule.forRootAsync({
