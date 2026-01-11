@@ -38,20 +38,46 @@ export class TelegramService {
 
   // ============ USER METHODS ============
 
+  async getUserPhotoUrl(telegramId: number): Promise<string | null> {
+    try {
+      const photos = await this.bot.telegram.getUserProfilePhotos(telegramId, 0, 1);
+      if (photos.total_count > 0 && photos.photos[0]?.length > 0) {
+        const fileId = photos.photos[0][photos.photos[0].length - 1].file_id;
+        const file = await this.bot.telegram.getFile(fileId);
+        return `https://api.telegram.org/file/bot${this.configService.get('BOT_TOKEN')}/${file.file_path}`;
+      }
+    } catch (error) {
+      console.error('Error getting user photo:', error);
+    }
+    return null;
+  }
+
   async findOrCreateUser(telegramId: number, username?: string, fullName?: string): Promise<User> {
     let user = await this.userRepo.findOne({ where: { telegram_id: telegramId } });
+    const isNewUser = !user;
+    
+    // Get user photo
+    const photoUrl = await this.getUserPhotoUrl(telegramId);
     
     if (!user) {
       user = this.userRepo.create({
         telegram_id: telegramId,
         username: username || null,
         full_name: fullName || null,
+        photo_url: photoUrl,
       });
       await this.userRepo.save(user);
+      
+      // Increment bot_users_count for all active channels
+      const activeChannels = await this.getActiveChannels();
+      for (const channel of activeChannels) {
+        await this.incrementChannelBotUsers(channel.channel_id);
+      }
     } else {
       // Update user info if changed
       if (username !== undefined) user.username = username;
       if (fullName !== undefined) user.full_name = fullName;
+      if (photoUrl) user.photo_url = photoUrl;
       user.updated_at = new Date();
       await this.userRepo.save(user);
     }
@@ -105,17 +131,59 @@ export class TelegramService {
 
   // ============ CHANNEL METHODS ============
 
+  async getChannelPhotoUrl(chatId: string): Promise<string | null> {
+    try {
+      const chat = await this.bot.telegram.getChat(chatId);
+      if (chat.photo) {
+        const file = await this.bot.telegram.getFile(chat.photo.big_file_id);
+        return `https://api.telegram.org/file/bot${this.configService.get('BOT_TOKEN')}/${file.file_path}`;
+      }
+    } catch (error) {
+      console.error('Error getting channel photo:', error);
+    }
+    return null;
+  }
+
   async getActiveChannels(): Promise<Channel[]> {
     return this.channelRepo.find({ where: { is_active: true } });
   }
 
+  async getAllChannelsWithDetails(): Promise<Channel[]> {
+    const channels = await this.channelRepo.find({ order: { created_at: 'DESC' } });
+    
+    // Get photo and member count for each channel
+    for (const channel of channels) {
+      try {
+        const photoUrl = await this.getChannelPhotoUrl(channel.channel_id);
+        if (photoUrl) channel.photo_url = photoUrl;
+        
+        const chat = await this.bot.telegram.getChat(channel.channel_id);
+        if ('title' in chat) {
+          channel.channel_title = chat.title;
+        }
+      } catch (error) {
+        console.error(`Error getting channel details for ${channel.channel_id}:`, error);
+      }
+    }
+    
+    return channels;
+  }
+
   async addChannel(channelData: Partial<Channel>): Promise<Channel> {
+    // Get channel photo
+    const photoUrl = await this.getChannelPhotoUrl(channelData.channel_id);
+    if (photoUrl) channelData.photo_url = photoUrl;
+    
     const channel = this.channelRepo.create(channelData);
     return this.channelRepo.save(channel);
   }
 
   async removeChannel(channelId: string): Promise<void> {
     await this.channelRepo.delete({ channel_id: channelId });
+  }
+
+  async incrementChannelBotUsers(channelId: string): Promise<void> {
+    await this.channelRepo.increment({ channel_id: channelId }, 'bot_users_count', 1);
   }
 
   async checkUserSubscription(telegramId: number): Promise<{ subscribed: boolean; unsubscribedChannels: Channel[] }> {

@@ -17,8 +17,14 @@ export class Channel {
   @Column({ type: 'text', nullable: true })
   invite_link: string;
 
+  @Column({ type: 'text', nullable: true })
+  photo_url: string;
+
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
+
+  @Column({ type: 'int', default: 0 })
+  bot_users_count: number;
 
   @CreateDateColumn()
   created_at: Date;

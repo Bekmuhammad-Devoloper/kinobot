@@ -3,6 +3,7 @@ import { AdminService } from './admin.service';
 import { MoviesService } from '../movies/movies.service';
 import { UsersService } from '../users/users.service';
 import { ChannelsService } from '../channels/channels.service';
+import { TelegramService } from '../telegram/telegram.service';
 import { CreateMovieDto, UpdateMovieDto, SetPremiereDto } from '../movies/dto';
 import { CreateChannelDto, UpdateChannelDto } from '../channels/dto';
 
@@ -13,6 +14,7 @@ export class AdminController {
     private readonly moviesService: MoviesService,
     private readonly usersService: UsersService,
     private readonly channelsService: ChannelsService,
+    private readonly telegramService: TelegramService,
   ) {}
 
   // Validate admin (in real app, use proper auth)
@@ -113,7 +115,7 @@ export class AdminController {
   @Get('channels')
   async getChannels(@Headers('x-telegram-id') telegramId: string) {
     this.validateAdmin(telegramId);
-    const channels = await this.channelsService.findAll();
+    const channels = await this.telegramService.getAllChannelsWithDetails();
     return { success: true, data: channels };
   }
 

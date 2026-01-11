@@ -15,6 +15,9 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true })
   full_name: string;
 
+  @Column({ type: 'text', nullable: true })
+  photo_url: string;
+
   @Column({ type: 'boolean', default: false })
   is_subscribed: boolean;
 
