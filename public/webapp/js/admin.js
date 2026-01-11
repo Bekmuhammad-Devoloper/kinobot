@@ -282,25 +282,15 @@ function renderChannels() {
             const channelId = channel.channel_id || channel.chatId;
             const isActive = channel.is_active !== undefined ? channel.is_active : channel.isActive;
             const botUsersCount = channel.bot_users_count || channel.botUsersCount || 0;
-            const photoUrl = channel.photo_url || channel.photoUrl;
+            
+            // Kanal nomidan birinchi harfni olish
+            const channelInitial = channelTitle.charAt(0).toUpperCase();
             
             html += `
                 <div class="channel-item ${isActive ? 'active' : 'inactive'}">
-                    ${photoUrl ? 
-                        `<img src="${photoUrl}" class="channel-avatar-img" alt="${escapeHtml(channelTitle)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                        <div class="channel-avatar" style="display:none; background: linear-gradient(135deg, #${getColorFromId(channel.id)} 0%, #${getColorFromId(channel.id + 5)} 100%);">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                                <rect x="2" y="7" width="20" height="15" rx="2" ry="2"/>
-                                <polyline points="17 2 12 7 7 2"/>
-                            </svg>
-                        </div>` :
-                        `<div class="channel-avatar" style="background: linear-gradient(135deg, #${getColorFromId(channel.id)} 0%, #${getColorFromId(channel.id + 5)} 100%);">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                                <rect x="2" y="7" width="20" height="15" rx="2" ry="2"/>
-                                <polyline points="17 2 12 7 7 2"/>
-                            </svg>
-                        </div>`
-                    }
+                    <div class="channel-avatar" style="background: linear-gradient(135deg, #${getColorFromId(channel.id)} 0%, #${getColorFromId(channel.id + 5)} 100%);">
+                        ${channelInitial}
+                    </div>
                     <div class="channel-info">
                         <div class="channel-name">
                             ${escapeHtml(channelTitle)}
@@ -311,7 +301,13 @@ function renderChannels() {
                         </div>
                         <div class="channel-meta">
                             ${channelUsername ? `@${channelUsername}` : channelId}
-                            ${botUsersCount > 0 ? ` • <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> ${formatNumber(botUsersCount)} bot user` : ''}
+                            <span class="bot-users-badge">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                </svg>
+                                ${formatNumber(botUsersCount)} bot user
+                            </span>
                         </div>
                     </div>
                     <div class="channel-actions">
