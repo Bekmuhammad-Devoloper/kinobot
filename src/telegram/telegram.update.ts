@@ -256,7 +256,7 @@ export class TelegramUpdate {
     await ctx.reply(
       '📢 Kanallar Boshqaruvi\n\n' +
       'Web App orqali kanallarni boshqaring:',
-      AdminKeyboard.channelsWebApp(`${this.adminWebAppUrl}/channels`)
+      AdminKeyboard.channelsWebApp(`${this.adminWebAppUrl}`)
     );
   }
 
@@ -269,7 +269,7 @@ export class TelegramUpdate {
     await ctx.reply(
       '👥 Userlar Statistikasi\n\n' +
       'Web App orqali userlarni ko\'ring:',
-      AdminKeyboard.usersWebApp(`${this.adminWebAppUrl}/users`)
+      AdminKeyboard.usersWebApp(`${this.adminWebAppUrl}`)
     );
   }
 
