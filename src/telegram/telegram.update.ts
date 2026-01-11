@@ -242,7 +242,15 @@ export class TelegramUpdate {
       '🎬 Premyera Kinolar - Eng yangi kinolarni ko\'ring\n' +
       '🔍 Kod orqali ko\'rish - Kino kodini kiritib, kinoni toping\n' +
       '📊 Mening statistikam - O\'z statistikangizni ko\'ring\n\n' +
-      '📞 Savol va takliflar uchun: @admin_username'
+      '📞 Savol va takliflar uchun: @Bobrr1234',
+      {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '📞 Admin bilan bog\'lanish', url: 'https://t.me/Bobrr1234' }]
+          ]
+        }
+      }
     );
   }
 
