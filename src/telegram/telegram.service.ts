@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { InjectBot } from 'nestjs-telegraf';
 import { Telegraf, Context } from 'telegraf';
+import axios from 'axios';
 import { User, Admin, Movie, Channel, UserView } from '../database/entities';
 
 export interface SessionData {
@@ -59,11 +60,8 @@ export class TelegramService {
         const fileId = photos.photos[0][photos.photos[0].length - 1].file_id;
         const fileLink = await this.bot.telegram.getFileLink(fileId);
         
-        const response = await fetch(fileLink.toString());
-        if (response.ok) {
-          const arrayBuffer = await response.arrayBuffer();
-          return Buffer.from(arrayBuffer);
-        }
+        const response = await axios.get(fileLink.toString(), { responseType: 'arraybuffer' });
+        return Buffer.from(response.data);
       }
     } catch (error) {
       console.error('Error getting user photo buffer:', error);
@@ -77,11 +75,8 @@ export class TelegramService {
       if (chat.photo) {
         const fileLink = await this.bot.telegram.getFileLink(chat.photo.big_file_id);
         
-        const response = await fetch(fileLink.toString());
-        if (response.ok) {
-          const arrayBuffer = await response.arrayBuffer();
-          return Buffer.from(arrayBuffer);
-        }
+        const response = await axios.get(fileLink.toString(), { responseType: 'arraybuffer' });
+        return Buffer.from(response.data);
       }
     } catch (error) {
       console.error('Error getting channel photo buffer:', error);
