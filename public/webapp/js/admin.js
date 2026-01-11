@@ -368,33 +368,44 @@ async function addChannel() {
     }
     
     try {
+        const requestBody = {
+                channel_title: title,
+                channel_id: chatId,
+                is_active: true
+            };
+            
+            // Username bo'lsa qo'shamiz
+            if (chatId.startsWith('@')) {
+                requestBody.channel_username = chatId.substring(1);
+            }
+            
+            // URL bo'lsa qo'shamiz
+            if (url) {
+                requestBody.invite_link = url;
+            }
+        
         const response = await fetch(`${API_URL}/admin/channels`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
                 'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || ''
             },
-            body: JSON.stringify({
-                channel_title: title,
-                channel_id: chatId,
-                invite_link: url || null,
-                channel_username: chatId.startsWith('@') ? chatId.substring(1) : null,
-                is_active: true
-            })
+            body: JSON.stringify(requestBody)
         });
         
         const result = await response.json();
+        console.log('Add channel response:', response.status, result);
         
-        if (result.success) {
+        if (response.ok && result.success) {
             closeAddChannelModal();
             await loadChannels();
             showToast('Kanal qo\'shildi');
         } else {
-            showToast(result.message || 'Xatolik yuz berdi', 'error');
+            showToast(result.message || result.error || `Xatolik: ${response.status}`, 'error');
         }
     } catch (error) {
         console.error('Error adding channel:', error);
-        showToast('Xatolik yuz berdi', 'error');
+        showToast('Tarmoq xatosi: ' + error.message, 'error');
     }
 }
 
