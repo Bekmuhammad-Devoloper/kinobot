@@ -54,4 +54,25 @@ export class PhotoProxyController {
       res.status(500).json({ error: 'Failed to get photo' });
     }
   }
+
+  @Get('thumbnail/:fileId')
+  @Header('Cache-Control', 'public, max-age=86400')
+  async getThumbnail(
+    @Param('fileId') fileId: string,
+    @Res() res: Response,
+  ) {
+    try {
+      const photoBuffer = await this.telegramService.getFileBuffer(fileId);
+      
+      if (photoBuffer) {
+        res.set('Content-Type', 'image/jpeg');
+        res.send(photoBuffer);
+      } else {
+        res.status(404).json({ error: 'Thumbnail not found' });
+      }
+    } catch (error) {
+      console.error('Error getting thumbnail:', error);
+      res.status(500).json({ error: 'Failed to get thumbnail' });
+    }
+  }
 }

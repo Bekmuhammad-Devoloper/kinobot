@@ -28,7 +28,7 @@ export class WebappController {
         code: movie.code,
         title: movie.title,
         description: movie.description,
-        thumbnailFileId: movie.thumbnail_file_id,
+        thumbnailFileId: movie.thumbnail_file_id ? `/photo/thumbnail/${movie.thumbnail_file_id}` : null,
         viewsCount: movie.views_count,
         duration: movie.duration,
       })),

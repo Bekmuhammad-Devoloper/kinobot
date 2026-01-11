@@ -88,6 +88,17 @@ export class TelegramService {
     return null;
   }
 
+  async getFileBuffer(fileId: string): Promise<Buffer | null> {
+    try {
+      const fileLink = await this.bot.telegram.getFileLink(fileId);
+      const response = await axios.get(fileLink.toString(), { responseType: 'arraybuffer' });
+      return Buffer.from(response.data);
+    } catch (error) {
+      console.error('Error getting file buffer:', error);
+    }
+    return null;
+  }
+
   async findOrCreateUser(telegramId: number, username?: string, fullName?: string): Promise<User> {
     let user = await this.userRepo.findOne({ where: { telegram_id: telegramId } });
     const isNewUser = !user;
