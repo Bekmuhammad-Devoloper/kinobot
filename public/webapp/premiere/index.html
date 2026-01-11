@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 Premyeralar - KinoBot</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="/webapp/css/style.css">
+    <style>
+        /* Page-specific styles */
+        .page-header {
+            text-align: center;
+            padding: 20px 16px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            margin-bottom: 16px;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .page-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        /* Modal Styles */
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        
+        #modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--bg-color);
+            width: 100%;
+            max-height: 85vh;
+            border-radius: 20px 20px 0 0;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        
+        .modal-thumbnail {
+            width: 100%;
+            height: 200px;
+            background: var(--secondary-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .modal-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .modal-placeholder {
+            font-size: 80px;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+        
+        .modal-description {
+            font-size: 14px;
+            color: var(--hint-color);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .modal-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--secondary-bg);
+            border-radius: 12px;
+        }
+        
+        .modal-stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+        
+        .modal-stat-icon {
+            font-size: 18px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn-watch-modal {
+            flex: 1;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-watch-modal:active {
+            transform: scale(0.98);
+        }
+
+        /* Override grid styles */
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            padding: 0 16px 20px;
+        }
+
+        @media (min-width: 600px) {
+            .movies-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="page-header">
+        <div class="page-title">🎬 Premyeralar</div>
+        <div class="page-subtitle">Eng yangi va mashhur kinolar</div>
+    </div>
+    
+    <!-- Loading State -->
+    <div id="loading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p style="margin-top: 16px; color: var(--hint-color);">Kinolar yuklanmoqda...</p>
+    </div>
+    
+    <!-- Empty State -->
+    <div id="empty" class="empty-state" style="display: none;">
+        <div style="font-size: 64px; margin-bottom: 16px;">🎬</div>
+        <h3>Hozircha premyeralar yo'q</h3>
+        <p style="color: var(--hint-color); margin-top: 8px;">Tez orada yangi kinolar qo'shiladi</p>
+    </div>
+    
+    <!-- Movies Grid -->
+    <div id="movies-grid" class="movies-grid" style="display: none;"></div>
+    
+    <!-- Modal -->
+    <div id="modal">
+        <div class="modal-content">
+            <div class="modal-thumbnail" id="modal-thumbnail"></div>
+            <div class="modal-body">
+                <h2 class="modal-title" id="modal-title">Kino nomi</h2>
+                <p class="modal-description" id="modal-description">Tavsif</p>
+                
+                <div class="modal-stats">
+                    <div class="modal-stat">
+                        <span class="modal-stat-icon">👁</span>
+                        <span id="modal-views">0</span> ko'rilgan
+                    </div>
+                    <div class="modal-stat">
+                        <span class="modal-stat-icon">⏱</span>
+                        <span id="modal-duration">--:--</span>
+                    </div>
+                    <div class="modal-stat">
+                        <span class="modal-stat-icon">📋</span>
+                        <span id="modal-code">---</span>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="btn-watch-modal" onclick="watchMovie(document.getElementById('modal-code').textContent)">
+                        ▶️ Ko'rishni boshlash
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/webapp/js/premiere.js"></script>
+</body>
+</html>
