@@ -277,21 +277,45 @@ function renderChannels() {
     } else {
         html += '<div class="channels-list">';
         channels.forEach(channel => {
+            const channelTitle = channel.channel_title || channel.title || "Noma'lum kanal";
+            const channelUsername = channel.channel_username || channel.username;
+            const channelId = channel.channel_id || channel.chatId;
+            const isActive = channel.is_active !== undefined ? channel.is_active : channel.isActive;
+            const membersCount = channel.members_count || channel.membersCount || 0;
+            
             html += `
-                <div class="channel-item ${channel.isActive ? 'active' : 'inactive'}">
+                <div class="channel-item ${isActive ? 'active' : 'inactive'}">
+                    <div class="channel-avatar" style="background: linear-gradient(135deg, #${getColorFromId(channel.id)} 0%, #${getColorFromId(channel.id + 5)} 100%);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <rect x="2" y="7" width="20" height="15" rx="2" ry="2"/>
+                            <polyline points="17 2 12 7 7 2"/>
+                        </svg>
+                    </div>
                     <div class="channel-info">
                         <div class="channel-name">
-                            ${escapeHtml(channel.title)}
-                            ${channel.isActive ? '<span class="status-badge active">✓ Aktiv</span>' : '<span class="status-badge inactive">○ Noaktiv</span>'}
+                            ${escapeHtml(channelTitle)}
+                            ${isActive ? 
+                                '<span class="status-badge active">Aktiv</span>' : 
+                                '<span class="status-badge inactive">Noaktiv</span>'
+                            }
                         </div>
-                        <div class="channel-username">${channel.username || channel.chatId}</div>
+                        <div class="channel-meta">
+                            ${channelUsername ? `@${channelUsername}` : channelId}
+                            ${membersCount > 0 ? ` • <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> ${formatNumber(membersCount)} obunachi` : ''}
+                        </div>
                     </div>
                     <div class="channel-actions">
-                        <button class="btn btn-icon" onclick="toggleChannel(${channel.id}, ${!channel.isActive})">
-                            ${channel.isActive ? '⏸️' : '▶️'}
+                        <button class="btn btn-icon" onclick="toggleChannel(${channel.id}, ${!isActive})" title="${isActive ? 'O\'chirish' : 'Yoqish'}">
+                            ${isActive ? 
+                                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>' : 
+                                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>'
+                            }
                         </button>
-                        <button class="btn btn-icon btn-danger" onclick="deleteChannel(${channel.id})">
-                            🗑️
+                        <button class="btn btn-icon btn-danger" onclick="deleteChannel(${channel.id})" title="O'chirish">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
                         </button>
                     </div>
                 </div>
@@ -311,7 +335,7 @@ async function toggleChannel(id, isActive) {
                 'Content-Type': 'application/json',
                 'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || ''
             },
-            body: JSON.stringify({ isActive })
+            body: JSON.stringify({ is_active: isActive })
         });
         
         if (response.ok) {
@@ -698,32 +722,51 @@ function renderMoviesAdmin(total) {
     } else {
         html += '<div class="movies-admin-list">';
         movies.forEach(movie => {
+            const movieTitle = movie.title || "Noma'lum kino";
+            const movieCode = movie.code || '---';
+            const isPremiere = movie.is_premiere !== undefined ? movie.is_premiere : movie.isPremiere;
+            const viewsCount = movie.views_count || movie.viewsCount || 0;
+            const thumbnailId = movie.thumbnail_file_id || movie.thumbnailFileId;
+            
             html += `
                 <div class="movie-admin-item">
+                    <div class="movie-thumbnail">
+                        ${thumbnailId ? 
+                            `<img src="/api/thumbnail/${thumbnailId}" alt="${escapeHtml(movieTitle)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="movie-thumbnail-placeholder" style="display:none;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+                                    <polygon points="10 8 16 12 10 16 10 8"/>
+                                </svg>
+                            </div>` :
+                            `<div class="movie-thumbnail-placeholder">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+                                    <polygon points="10 8 16 12 10 16 10 8"/>
+                                </svg>
+                            </div>`
+                        }
+                    </div>
                     <div class="movie-admin-info">
                         <div class="movie-admin-title">
-                            ${escapeHtml(movie.title)}
-                            ${movie.isPremiere ? '<span class="status-badge premiere">Premyera</span>' : ''}
+                            ${escapeHtml(movieTitle)}
                         </div>
                         <div class="movie-admin-meta">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
-                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                            </svg>
-                            ${movie.code} • 
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                            ${formatNumber(movie.viewsCount || 0)}
+                            <span class="movie-code">${movieCode}</span>
+                            <span class="movie-views">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                ${formatNumber(viewsCount)}
+                            </span>
                         </div>
                     </div>
                     <div class="movie-admin-actions">
-                        <button class="btn btn-icon" onclick="togglePremiere(${movie.id}, ${!movie.isPremiere})" title="${movie.isPremiere ? 'Premyeradan olib tashlash' : 'Premyera qilish'}">
-                            ${movie.isPremiere ? 
-                                '<svg width="18" height="18" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' : 
-                                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
-                            }
+                        <button class="btn btn-icon premiere-btn ${isPremiere ? 'active' : ''}" onclick="togglePremiere(${movie.id}, ${!isPremiere})" title="${isPremiere ? 'Premyeradan olib tashlash' : 'Premyera qilish'}">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="${isPremiere ? '#f59e0b' : 'none'}" stroke="${isPremiere ? '#f59e0b' : 'currentColor'}" stroke-width="2">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                            </svg>
                         </button>
                         <button class="btn btn-icon btn-danger" onclick="deleteMovie(${movie.id})" title="O'chirish">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
@@ -742,9 +785,13 @@ function renderMoviesAdmin(total) {
             const totalPages = Math.ceil(total / pageSize);
             html += `
                 <div class="pagination">
-                    <button class="btn btn-sm" ${moviePage === 1 ? 'disabled' : ''} onclick="loadMovies(${moviePage - 1})">◀️</button>
+                    <button class="btn btn-sm" ${moviePage === 1 ? 'disabled' : ''} onclick="loadMovies(${moviePage - 1})">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
                     <span class="page-info">${moviePage} / ${totalPages}</span>
-                    <button class="btn btn-sm" ${moviePage === totalPages ? 'disabled' : ''} onclick="loadMovies(${moviePage + 1})">▶️</button>
+                    <button class="btn btn-sm" ${moviePage === totalPages ? 'disabled' : ''} onclick="loadMovies(${moviePage + 1})">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
                 </div>
             `;
         }
@@ -824,32 +871,51 @@ function searchMovies(query) {
     
     html += '<div class="movies-admin-list">';
     filtered.forEach(movie => {
+        const movieTitle = movie.title || "Noma'lum kino";
+        const movieCode = movie.code || '---';
+        const isPremiere = movie.is_premiere !== undefined ? movie.is_premiere : movie.isPremiere;
+        const viewsCount = movie.views_count || movie.viewsCount || 0;
+        const thumbnailId = movie.thumbnail_file_id || movie.thumbnailFileId;
+        
         html += `
             <div class="movie-admin-item">
+                <div class="movie-thumbnail">
+                    ${thumbnailId ? 
+                        `<img src="/api/thumbnail/${thumbnailId}" alt="${escapeHtml(movieTitle)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="movie-thumbnail-placeholder" style="display:none;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+                                <polygon points="10 8 16 12 10 16 10 8"/>
+                            </svg>
+                        </div>` :
+                        `<div class="movie-thumbnail-placeholder">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+                                <polygon points="10 8 16 12 10 16 10 8"/>
+                            </svg>
+                        </div>`
+                    }
+                </div>
                 <div class="movie-admin-info">
                     <div class="movie-admin-title">
-                        ${escapeHtml(movie.title)}
-                        ${movie.isPremiere ? '<span class="status-badge premiere">Premyera</span>' : ''}
+                        ${escapeHtml(movieTitle)}
                     </div>
                     <div class="movie-admin-meta">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
-                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                        </svg>
-                        ${movie.code} • 
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                        ${formatNumber(movie.viewsCount || 0)}
+                        <span class="movie-code">${movieCode}</span>
+                        <span class="movie-views">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            ${formatNumber(viewsCount)}
+                        </span>
                     </div>
                 </div>
                 <div class="movie-admin-actions">
-                    <button class="btn btn-icon" onclick="togglePremiere(${movie.id}, ${!movie.isPremiere})" title="${movie.isPremiere ? 'Premyeradan olib tashlash' : 'Premyera qilish'}">
-                        ${movie.isPremiere ? 
-                            '<svg width="18" height="18" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' : 
-                            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
-                        }
+                    <button class="btn btn-icon premiere-btn ${isPremiere ? 'active' : ''}" onclick="togglePremiere(${movie.id}, ${!isPremiere})" title="${isPremiere ? 'Premyeradan olib tashlash' : 'Premyera qilish'}">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="${isPremiere ? '#f59e0b' : 'none'}" stroke="${isPremiere ? '#f59e0b' : 'currentColor'}" stroke-width="2">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
                     </button>
                     <button class="btn btn-icon btn-danger" onclick="deleteMovie(${movie.id})" title="O'chirish">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
