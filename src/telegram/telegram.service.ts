@@ -150,6 +150,7 @@ export class TelegramService {
 
   async getAllChannelsWithDetails(): Promise<Channel[]> {
     const channels = await this.channelRepo.find({ order: { created_at: 'DESC' } });
+    const totalUsers = await this.userRepo.count();
     
     // Get photo and member count for each channel
     for (const channel of channels) {
@@ -160,6 +161,12 @@ export class TelegramService {
         const chat = await this.bot.telegram.getChat(channel.channel_id);
         if ('title' in chat) {
           channel.channel_title = chat.title;
+        }
+        
+        // Agar bot_users_count 0 bo'lsa, mavjud userlar soniga tenglashtiramiz
+        if (channel.bot_users_count === 0 && totalUsers > 0) {
+          channel.bot_users_count = totalUsers;
+          await this.channelRepo.update(channel.id, { bot_users_count: totalUsers });
         }
       } catch (error) {
         console.error(`Error getting channel details for ${channel.channel_id}:`, error);
