@@ -212,11 +212,15 @@ function formatNumber(num) {
 function formatDuration(seconds) {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
     
     if (hours > 0) {
         return `${hours}s ${minutes}d`;
     }
-    return `${minutes} daqiqa`;
+    if (minutes > 0) {
+        return `${minutes}d ${secs}s`;
+    }
+    return `${secs} sekund`;
 }
 
 function escapeHtml(text) {
