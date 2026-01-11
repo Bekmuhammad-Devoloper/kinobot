@@ -497,23 +497,29 @@ function renderUsers(total) {
     } else {
         html += '<div class="users-list">';
         users.forEach(user => {
-            const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Ism kiritilmagan';
+            // Backend full_name qaytaradi
+            const fullName = user.full_name || user.fullName || 'Noma\'lum';
+            const telegramId = user.telegram_id || user.telegramId;
+            const isBanned = user.is_banned || user.isBanned;
+            
             html += `
-                <div class="user-item ${user.isBanned ? 'banned' : ''}">
-                    <div class="user-avatar">${getInitials(fullName)}</div>
+                <div class="user-item ${isBanned ? 'banned' : ''}">
+                    <div class="user-avatar" style="background: linear-gradient(135deg, #${getColorFromId(telegramId)} 0%, #${getColorFromId(telegramId + 1)} 100%);">
+                        ${getInitials(fullName)}
+                    </div>
                     <div class="user-info">
                         <div class="user-name">
                             ${escapeHtml(fullName)}
-                            ${user.isBanned ? '<span class="status-badge banned">Bloklangan</span>' : ''}
+                            ${isBanned ? '<span class="status-badge banned">Bloklangan</span>' : ''}
                         </div>
                         <div class="user-details">
-                            ID: ${user.telegramId} 
+                            ID: ${telegramId} 
                             ${user.username ? `• @${user.username}` : ''}
                         </div>
                     </div>
                     <div class="user-actions">
-                        <button class="btn btn-icon" onclick="toggleUserBan(${user.id}, ${!user.isBanned})" title="${user.isBanned ? 'Blokdan chiqarish' : 'Bloklash'}">
-                            ${user.isBanned ? 
+                        <button class="btn btn-icon" onclick="toggleUserBan(${user.id}, ${!isBanned})" title="${isBanned ? 'Blokdan chiqarish' : 'Bloklash'}">
+                            ${isBanned ? 
                                 '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' : 
                                 '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>'
                             }
@@ -566,12 +572,13 @@ function searchUsers(query) {
         return;
     }
     
-    const filtered = users.filter(u => 
-        (u.firstName && u.firstName.toLowerCase().includes(query.toLowerCase())) ||
-        (u.lastName && u.lastName.toLowerCase().includes(query.toLowerCase())) ||
-        (u.username && u.username.toLowerCase().includes(query.toLowerCase())) ||
-        u.telegramId.toString().includes(query)
-    );
+    const filtered = users.filter(u => {
+        const fullName = u.full_name || u.fullName || '';
+        const telegramId = (u.telegram_id || u.telegramId || '').toString();
+        return fullName.toLowerCase().includes(query.toLowerCase()) ||
+            (u.username && u.username.toLowerCase().includes(query.toLowerCase())) ||
+            telegramId.includes(query);
+    });
     
     const container = document.getElementById('users-content');
     let html = `
@@ -593,23 +600,28 @@ function searchUsers(query) {
     
     html += '<div class="users-list">';
     filtered.forEach(user => {
-        const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Ism kiritilmagan';
+        const fullName = user.full_name || user.fullName || "Noma'lum";
+        const telegramId = user.telegram_id || user.telegramId;
+        const isBanned = user.is_banned || user.isBanned;
+        
         html += `
-            <div class="user-item ${user.isBanned ? 'banned' : ''}">
-                <div class="user-avatar">${getInitials(fullName)}</div>
+            <div class="user-item ${isBanned ? 'banned' : ''}">
+                <div class="user-avatar" style="background: linear-gradient(135deg, #${getColorFromId(telegramId)} 0%, #${getColorFromId(telegramId + 1)} 100%);">
+                    ${getInitials(fullName)}
+                </div>
                 <div class="user-info">
                     <div class="user-name">
                         ${escapeHtml(fullName)}
-                        ${user.isBanned ? '<span class="status-badge banned">Bloklangan</span>' : ''}
+                        ${isBanned ? '<span class="status-badge banned">Bloklangan</span>' : ''}
                     </div>
                     <div class="user-details">
-                        ID: ${user.telegramId} 
+                        ID: ${telegramId} 
                         ${user.username ? `• @${user.username}` : ''}
                     </div>
                 </div>
                 <div class="user-actions">
-                    <button class="btn btn-icon" onclick="toggleUserBan(${user.id}, ${!user.isBanned})" title="${user.isBanned ? 'Blokdan chiqarish' : 'Bloklash'}">
-                        ${user.isBanned ? 
+                    <button class="btn btn-icon" onclick="toggleUserBan(${user.id}, ${!isBanned})" title="${isBanned ? 'Blokdan chiqarish' : 'Bloklash'}">
+                        ${isBanned ? 
                             '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' : 
                             '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>'
                         }
@@ -928,9 +940,21 @@ function escapeHtml(text) {
 }
 
 function getInitials(name) {
+    if (!name || name === "Noma'lum") return '?';
     const parts = name.split(' ').filter(Boolean);
     if (parts.length >= 2) {
         return (parts[0][0] + parts[1][0]).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+}
+
+// Telegram ID dan rang generatsiya qilish
+function getColorFromId(id) {
+    const colors = [
+        '6366f1', '8b5cf6', 'a855f7', 'd946ef', 'ec4899',
+        'f43f5e', 'ef4444', 'f97316', 'f59e0b', 'eab308',
+        '84cc16', '22c55e', '10b981', '14b8a6', '06b6d4',
+        '0ea5e9', '3b82f6', '6366f1'
+    ];
+    return colors[Math.abs(id) % colors.length];
 }
