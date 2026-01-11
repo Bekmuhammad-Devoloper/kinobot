@@ -32,7 +32,7 @@ export class TelegramService {
     @InjectRepository(UserView) private readonly userViewRepo: Repository<UserView>,
     private readonly configService: ConfigService,
   ) {
-    const adminIdsStr = this.configService.get('ADMIN_TELEGRAM_IDS', '');
+    const adminIdsStr = this.configService.get('ADMIN_IDS', '');
     this.adminIds = adminIdsStr.split(',').map((id: string) => parseInt(id.trim())).filter((id: number) => !isNaN(id));
   }
 
