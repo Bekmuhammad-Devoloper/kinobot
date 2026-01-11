@@ -23,6 +23,10 @@ import { WebappModule } from './webapp/webapp.module';
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'public', 'webapp'),
       serveRoot: '/webapp',
+      serveStaticOptions: {
+        index: ['index.html'],
+        fallthrough: true,
+      },
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
