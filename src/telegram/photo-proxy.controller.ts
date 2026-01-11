@@ -34,7 +34,14 @@ export class PhotoProxyController {
     @Res() res: Response,
   ) {
     try {
-      const photoBuffer = await this.telegramService.getChannelPhotoBuffer(channelId);
+      // channelId @ bilan boshlanmasa, @ qo'shamiz
+      let formattedChannelId = channelId;
+      if (!channelId.startsWith('@') && !channelId.startsWith('-')) {
+        formattedChannelId = '@' + channelId;
+      }
+      
+      console.log('Getting channel photo for:', formattedChannelId);
+      const photoBuffer = await this.telegramService.getChannelPhotoBuffer(formattedChannelId);
       
       if (photoBuffer) {
         res.set('Content-Type', 'image/jpeg');

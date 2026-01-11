@@ -285,8 +285,9 @@ function renderChannels() {
             
             // Kanal nomidan birinchi harfni olish
             const channelInitial = channelTitle.charAt(0).toUpperCase();
-            // Kanal rasmi URL
-            const channelPhotoUrl = `/api/photo/channel/${encodeURIComponent(channelId)}`;
+            // Kanal rasmi URL - @ belgisini olib tashlaymiz
+            const cleanChannelId = channelId.toString().replace('@', '');
+            const channelPhotoUrl = `/api/photo/channel/${encodeURIComponent(cleanChannelId)}`;
             
             html += `
                 <div class="channel-item ${isActive ? 'active' : 'inactive'}">

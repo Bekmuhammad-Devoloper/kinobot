@@ -195,8 +195,9 @@ export class TelegramService {
           channel.channel_title = chat.title;
         }
         
-        // Agar bot_users_count 0 bo'lsa, mavjud userlar soniga tenglashtiramiz
-        if (channel.bot_users_count === 0 && totalUsers > 0) {
+        // Har doim bot_users_count ni totalUsers ga tenglashtir
+        // chunki barcha userlar botdan foydalanadi
+        if (channel.bot_users_count !== totalUsers) {
           channel.bot_users_count = totalUsers;
           await this.channelRepo.update(channel.id, { bot_users_count: totalUsers });
         }
