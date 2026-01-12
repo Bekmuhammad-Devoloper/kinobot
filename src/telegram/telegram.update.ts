@@ -601,9 +601,9 @@ export class TelegramUpdate {
     await ctx.deleteMessage();
   }
 
-  // ============ WEB APP DATA HANDLER ============
-  @On('message')
-  async onMessage(@Ctx() ctx: BotContext) {
+  // ============ TEXT MESSAGE HANDLER ============
+  @On('text')
+  async onText(@Ctx() ctx: BotContext) {
     const user = ctx.from;
     if (!user) return;
 
@@ -651,16 +651,8 @@ export class TelegramUpdate {
       }
       return;
     }
-  }
 
-  // ============ TEXT MESSAGE HANDLER ============
-  @On('text')
-  async onText(@Ctx() ctx: BotContext) {
-    const user = ctx.from;
-    if (!user) return;
-
-    const message = ctx.message as Message.TextMessage;
-    const text = message.text;
+    const text = (message as Message.TextMessage).text;
 
     // Handle scenes
     if (ctx.session?.scene === 'search_by_code') {
