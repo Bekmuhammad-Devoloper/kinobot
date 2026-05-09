@@ -26,6 +26,32 @@ export function registerBotHandlers(
 
   const isAdmin = (telegramId: number) => svc.isAdmin(botId, telegramId);
 
+  // file_type'ga qarab kerakli replyWith* metodini chaqirish
+  async function sendMovieMedia(ctx: BotContext, movie: { file_id: string; file_type?: string; title: string; description?: string; views_count?: number }) {
+    const caption = `🎬 ${movie.title}\n\n${movie.description || ''}\n\n👁 Ko'rishlar: ${movie.views_count ?? 0}`;
+    const ft = movie.file_type || 'video';
+    try {
+      if (ft === 'animation') {
+        await ctx.replyWithAnimation(movie.file_id, { caption });
+      } else if (ft === 'video_note') {
+        await ctx.replyWithVideoNote(movie.file_id);
+        await ctx.reply(caption);
+      } else if (ft === 'document') {
+        await ctx.replyWithDocument(movie.file_id, { caption });
+      } else {
+        await ctx.replyWithVideo(movie.file_id, { caption });
+      }
+    } catch (e) {
+      // Fallback — har bir holatga document orqali yuborib ko'rish
+      try {
+        await ctx.replyWithDocument(movie.file_id, { caption });
+      } catch (err) {
+        console.error('sendMovieMedia failed:', err);
+        await ctx.reply('❌ Kinoni yuborishda xatolik yuz berdi.');
+      }
+    }
+  }
+
   async function showMainMenu(ctx: BotContext) {
     const user = ctx.from;
     const admin = await isAdmin(user.id);
@@ -383,14 +409,8 @@ export function registerBotHandlers(
     }
 
     await ctx.answerCbQuery('🎬 Kino yuklanmoqda...');
-    try {
-      await ctx.replyWithVideo(movie.file_id, {
-        caption: `🎬 ${movie.title}\n\n${movie.description || ''}`,
-      });
-      await svc.incrementMovieViews(botId, movie.id, user.id);
-    } catch {
-      await ctx.reply('❌ Video yuborishda xatolik yuz berdi.');
-    }
+    await sendMovieMedia(ctx, movie);
+    await svc.incrementMovieViews(botId, movie.id, user.id);
   });
 
   bot.action(/^movies_page_(\d+)$/, async (ctx) => {
@@ -547,15 +567,8 @@ export function registerBotHandlers(
           await ctx.reply('❌ Kino topilmadi!');
           return;
         }
-        try {
-          await ctx.replyWithVideo(movie.file_id, {
-            caption: `🎬 ${movie.title}\n\n${movie.description || ''}\n\n👁 Ko'rishlar: ${movie.views_count}`,
-          });
-          await svc.incrementMovieViews(botId, movie.id, user.id);
-        } catch (error) {
-          console.error('Error sending video:', error);
-          await ctx.reply('❌ Video yuborishda xatolik yuz berdi.');
-        }
+        await sendMovieMedia(ctx, movie);
+        await svc.incrementMovieViews(botId, movie.id, user.id);
       }
     } catch (error) {
       console.error('Error parsing web app data:', error);
@@ -633,22 +646,70 @@ export function registerBotHandlers(
     }
   });
 
-  // ============ VIDEO (admin upload) ============
+  // ============ VIDEO/MEDIA (admin upload) ============
+  // Telegram'da kino bir nechta turda yuborilishi mumkin:
+  //   - video (oddiy video)
+  //   - animation (GIF / qisqa video)
+  //   - video_note (dumaloq video)
+  //   - document (fayl sifatida yuborilgan video, mime_type: video/*)
+  async function captureUploadMedia(
+    ctx: BotContext,
+    fileId: string,
+    fileType: string,
+    duration?: number,
+    fileSize?: number,
+    thumbId?: string,
+  ) {
+    if (ctx.session?.scene !== 'upload_movie' || ctx.session?.step !== 4) return false;
+    ctx.session.movieData.file_id = fileId;
+    ctx.session.movieData.file_type = fileType;
+    if (duration !== undefined) ctx.session.movieData.duration = duration;
+    if (fileSize !== undefined) ctx.session.movieData.file_size = fileSize;
+    if (thumbId) ctx.session.movieData.auto_thumbnail_file_id = thumbId;
+    ctx.session.step = 5;
+    await ctx.reply('5️⃣ Thumbnail rasm yuboring (ixtiyoriy):', AdminKeyboard.skipOrCancel());
+    return true;
+  }
+
   bot.on('video', async (ctx) => {
     const user = ctx.from;
     if (!user || !(await isAdmin(user.id))) return;
+    const v = (ctx.message as Message.VideoMessage).video;
+    const handled = await captureUploadMedia(ctx, v.file_id, 'video', v.duration, v.file_size, v.thumbnail?.file_id);
+    if (!handled && ctx.session?.scene === 'upload_movie') {
+      await ctx.reply('⚠️ Avval boshqa qadamlarni to\'ldiring. Qayta boshlash uchun "❌ Bekor qilish" → "📤 Kino Yuklash".');
+    }
+  });
+
+  bot.on('animation', async (ctx) => {
+    const user = ctx.from;
+    if (!user || !(await isAdmin(user.id))) return;
+    const a = (ctx.message as any).animation;
+    if (!a) return;
+    await captureUploadMedia(ctx, a.file_id, 'animation', a.duration, a.file_size, a.thumbnail?.file_id);
+  });
+
+  bot.on('video_note', async (ctx) => {
+    const user = ctx.from;
+    if (!user || !(await isAdmin(user.id))) return;
+    const vn = (ctx.message as any).video_note;
+    if (!vn) return;
+    await captureUploadMedia(ctx, vn.file_id, 'video_note', vn.duration, vn.file_size, vn.thumbnail?.file_id);
+  });
+
+  // Document — agar mime_type video/* bo'lsa
+  bot.on('document', async (ctx) => {
+    const user = ctx.from;
+    if (!user || !(await isAdmin(user.id))) return;
+    const doc = (ctx.message as any).document;
+    if (!doc) return;
     if (ctx.session?.scene === 'upload_movie' && ctx.session?.step === 4) {
-      const message = ctx.message as Message.VideoMessage;
-      const video = message.video;
-      ctx.session.movieData.file_id = video.file_id;
-      ctx.session.movieData.file_type = 'video';
-      ctx.session.movieData.duration = video.duration;
-      ctx.session.movieData.file_size = video.file_size;
-      if (video.thumbnail) {
-        ctx.session.movieData.auto_thumbnail_file_id = video.thumbnail.file_id;
+      const isVideo = (doc.mime_type || '').startsWith('video/');
+      if (isVideo) {
+        await captureUploadMedia(ctx, doc.file_id, 'document', undefined, doc.file_size, doc.thumbnail?.file_id);
+      } else {
+        await ctx.reply('⚠️ Video fayl yuboring (video yoki .mp4 hujjat).');
       }
-      ctx.session.step = 5;
-      await ctx.reply('5️⃣ Thumbnail rasm yuboring (ixtiyoriy):', AdminKeyboard.skipOrCancel());
     }
   });
 
