@@ -98,14 +98,50 @@
         .toast.success { background: #1f8d4d; }
         .ext-btns { display: flex; gap: 6px; flex-wrap: wrap; }
         .open-link { color: #5fa9ff; text-decoration: none; font-size: 12px; }
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: #0e1421;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-box {
+            background: #182234;
+            border-radius: 16px;
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 360px;
+            border: 1px solid #243043;
+        }
+        .login-box h2 { text-align: center; margin-bottom: 24px; font-size: 22px; }
+        .login-box input { margin-top: 6px; margin-bottom: 14px; }
+        .login-box .btn { width: 100%; padding: 12px; font-size: 15px; margin-top: 4px; }
+        .login-error { color: #ff7878; font-size: 13px; margin-bottom: 10px; display: none; text-align: center; }
+        .logout-btn { float: right; background: transparent; border: 1px solid #c44; color: #ff7878; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
     </style>
 </head>
 <body>
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box">
+            <h2>🔐 Super Admin</h2>
+            <label>Login
+                <input type="text" id="loginInput" placeholder="Login" autocomplete="username">
+            </label>
+            <label>Parol
+                <input type="password" id="passwordInput" placeholder="Parol" autocomplete="current-password">
+            </label>
+            <div class="login-error" id="loginError">Login yoki parol noto'g'ri</div>
+            <button class="btn btn-success" onclick="doLogin()">Kirish →</button>
+        </div>
+    </div>
+
     <div class="toast" id="toast"></div>
 
     <div class="header">
         <h1>👑 Super Admin Panel</h1>
-        <div class="subtitle">Zakaz botlarni boshqarish</div>
+        <div class="subtitle">Zakaz botlarni boshqarish <button class="logout-btn" onclick="doLogout()">Chiqish</button></div>
     </div>
 
     <div class="card">
@@ -141,10 +177,48 @@
 
         const API = '/api/super-admin/bots';
         let myTgId = tg?.initDataUnsafe?.user?.id;
+        let adminToken = localStorage.getItem('sa_token');
 
         // Allow URL override for desktop testing
         const urlTg = new URLSearchParams(location.search).get('tg');
         if (urlTg) myTgId = parseInt(urlTg);
+
+        async function doLogin() {
+            const login = document.getElementById('loginInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            document.getElementById('loginError').style.display = 'none';
+            if (!login || !password) return;
+            try {
+                const res = await fetch('/api/super-admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ login, password }),
+                });
+                const j = await res.json();
+                if (j.success && j.token) {
+                    adminToken = j.token;
+                    localStorage.setItem('sa_token', j.token);
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    loadBots();
+                } else {
+                    document.getElementById('loginError').style.display = 'block';
+                }
+            } catch (e) {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        function doLogout() {
+            localStorage.removeItem('sa_token');
+            adminToken = null;
+            document.getElementById('loginOverlay').style.display = 'flex';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('passwordInput').addEventListener('keydown', e => {
+                if (e.key === 'Enter') doLogin();
+            });
+        });
 
         function toast(msg, type = 'success') {
             const t = document.getElementById('toast');
@@ -155,12 +229,21 @@
         }
 
         function headers() {
+            if (adminToken) {
+                return { 'Content-Type': 'application/json', 'x-admin-token': adminToken };
+            }
             return { 'Content-Type': 'application/json', 'x-telegram-id': myTgId };
         }
 
         async function loadBots() {
             try {
                 const res = await fetch(API, { headers: headers() });
+                if (res.status === 401) {
+                    adminToken = null;
+                    localStorage.removeItem('sa_token');
+                    document.getElementById('loginOverlay').style.display = 'flex';
+                    return;
+                }
                 const j = await res.json();
                 if (!j.success) { toast(j.message || 'Xato', 'error'); return; }
                 renderBots(j.data);
@@ -302,9 +385,8 @@
         }
 
         // Init
-        if (!myTgId) {
-            document.body.innerHTML = '<div class="card empty">⛔ Telegram WebApp orqali oching yoki ?tg=ID parametri bilan</div>';
-        } else {
+        if (adminToken || myTgId) {
+            document.getElementById('loginOverlay').style.display = 'none';
             loadBots();
         }
     </script>

@@ -4,9 +4,11 @@
 #   1) Domain DNS A recordi server IP ga ulangan bo'lsin (cinema.bot.yuksalish.dev -> 104.248.25.130)
 #   2) Quyidagi env o'zgaruvchilarni kiriting va skriptni ishga tushiring:
 #        export DOMAIN=cinema.bot.yuksalish.dev
-#        export ADMIN_EMAIL=you@example.com
+#        export ADMIN_EMAIL=you@example.com           # ixtiyoriy (Let's Encrypt uchun)
 #        export DB_PASSWORD=2006
 #        export SUPER_ADMIN_TELEGRAM_ID=6340537709
+#        export SUPER_ADMIN_LOGIN=admin               # web panel'ga kirish uchun
+#        export SUPER_ADMIN_PASSWORD=Bek2026!         # web panel'ga kirish uchun
 #        export REPO_URL=https://github.com/Bekmuhammad-Devoloper/kinobot.git
 #        bash deploy/setup-server.sh
 #
@@ -15,9 +17,11 @@
 set -euo pipefail
 
 DOMAIN="${DOMAIN:?DOMAIN env required}"
-ADMIN_EMAIL="${ADMIN_EMAIL:?ADMIN_EMAIL env required (Let's Encrypt)}"
+ADMIN_EMAIL="${ADMIN_EMAIL:-}"
 DB_PASSWORD="${DB_PASSWORD:?DB_PASSWORD env required}"
 SUPER_ADMIN_TELEGRAM_ID="${SUPER_ADMIN_TELEGRAM_ID:?SUPER_ADMIN_TELEGRAM_ID env required}"
+SUPER_ADMIN_LOGIN="${SUPER_ADMIN_LOGIN:-admin}"
+SUPER_ADMIN_PASSWORD="${SUPER_ADMIN_PASSWORD:?SUPER_ADMIN_PASSWORD env required}"
 REPO_URL="${REPO_URL:-https://github.com/Bekmuhammad-Devoloper/kinobot.git}"
 APP_DIR="${APP_DIR:-/opt/kinobot}"
 NODE_VERSION="${NODE_VERSION:-20}"
@@ -66,6 +70,8 @@ cd "$APP_DIR"
 
 cat > .env <<EOF
 SUPER_ADMIN_TELEGRAM_ID=${SUPER_ADMIN_TELEGRAM_ID}
+SUPER_ADMIN_LOGIN=${SUPER_ADMIN_LOGIN}
+SUPER_ADMIN_PASSWORD=${SUPER_ADMIN_PASSWORD}
 
 DB_HOST=localhost
 DB_PORT=5432
@@ -123,7 +129,11 @@ nginx -t
 systemctl reload nginx
 
 # Get SSL cert (will modify nginx config to add 443 + redirect)
-certbot --nginx -d "${DOMAIN}" --non-interactive --agree-tos -m "${ADMIN_EMAIL}" --redirect || true
+if [[ -n "${ADMIN_EMAIL}" ]]; then
+  certbot --nginx -d "${DOMAIN}" --non-interactive --agree-tos -m "${ADMIN_EMAIL}" --redirect || true
+else
+  certbot --nginx -d "${DOMAIN}" --non-interactive --agree-tos --register-unsafely-without-email --redirect || true
+fi
 systemctl reload nginx
 
 log "8/8 Done"
@@ -131,5 +141,7 @@ pm2 status
 echo
 echo "✅ Deploy tugadi."
 echo "🌐 https://${DOMAIN}/webapp/super-admin/"
+echo "🔐 Login:       ${SUPER_ADMIN_LOGIN}"
+echo "🔐 Parol:       ${SUPER_ADMIN_PASSWORD}"
 echo "📋 PM2 loglar:  pm2 logs kinobot"
 echo "🔄 Yangilash:   bash $APP_DIR/deploy/update.sh"

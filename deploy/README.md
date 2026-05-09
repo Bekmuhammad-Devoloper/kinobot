@@ -20,12 +20,16 @@ So'ngra quyidagini bitta qatorda nusxalab yopishtiring (qiymatlarni o'zingizniki
 
 ```bash
 export DOMAIN=cinema.bot.yuksalish.dev \
-  ADMIN_EMAIL=admin@example.com \
+  ADMIN_EMAIL=bekmuhammad.devoloper@gmail.com \
   DB_PASSWORD=2006 \
   SUPER_ADMIN_TELEGRAM_ID=6340537709 \
+  SUPER_ADMIN_LOGIN=admin \
+  SUPER_ADMIN_PASSWORD='Bek2026!' \
   REPO_URL=https://github.com/Bekmuhammad-Devoloper/kinobot.git \
 && curl -fsSL https://raw.githubusercontent.com/Bekmuhammad-Devoloper/kinobot/main/deploy/setup-server.sh | bash
 ```
+
+> 💡 `SUPER_ADMIN_LOGIN` va `SUPER_ADMIN_PASSWORD` — super-admin web paneliga kirish uchun. Keyinchalik o'zgartirish uchun `/opt/kinobot/.env` faylini tahrirlab `pm2 restart kinobot` qiling.
 
 Skript:
 - Node.js 20, PostgreSQL, Nginx, PM2, Certbot o'rnatadi
