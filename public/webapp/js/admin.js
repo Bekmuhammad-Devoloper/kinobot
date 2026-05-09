@@ -293,7 +293,7 @@ function renderChannels() {
             const channelInitial = channelTitle.charAt(0).toUpperCase();
             // Kanal rasmi URL - @ belgisini olib tashlaymiz
             const cleanChannelId = channelId.toString().replace('@', '');
-            const channelPhotoUrl = `/api/photo/channel/${encodeURIComponent(cleanChannelId)}`;
+            const channelPhotoUrl = `/api/photo/channel/${encodeURIComponent(cleanChannelId)}?bot=${BOT_ID || ''}`;
             
             html += `
                 <div class="channel-item ${isActive ? 'active' : 'inactive'}">
@@ -547,7 +547,7 @@ function renderUsers(total) {
             const telegramId = user.telegram_id || user.telegramId;
             const isBanned = user.is_banned || user.isBanned;
             // Haqiqiy rasm URL
-            const userPhotoUrl = `/api/photo/user/${telegramId}`;
+            const userPhotoUrl = `/api/photo/user/${telegramId}?bot=${BOT_ID || ''}`;
             
             html += `
                 <div class="user-item ${isBanned ? 'banned' : ''}">
@@ -759,7 +759,7 @@ function renderMoviesAdmin(total) {
                 <div class="movie-admin-item">
                     <div class="movie-thumbnail">
                         ${thumbnailId ? 
-                            `<img src="/api/thumbnail/${thumbnailId}" alt="${escapeHtml(movieTitle)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            `<img src="/api/photo/thumbnail/${thumbnailId}?bot=${BOT_ID || ''}" alt="${escapeHtml(movieTitle)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                             <div class="movie-thumbnail-placeholder" style="display:none;">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                     <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
@@ -910,7 +910,7 @@ function searchMovies(query) {
             <div class="movie-admin-item">
                 <div class="movie-thumbnail">
                     ${thumbnailId ? 
-                        `<img src="/api/thumbnail/${thumbnailId}" alt="${escapeHtml(movieTitle)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        `<img src="/api/photo/thumbnail/${thumbnailId}?bot=${BOT_ID || ''}" alt="${escapeHtml(movieTitle)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <div class="movie-thumbnail-placeholder" style="display:none;">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                 <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
