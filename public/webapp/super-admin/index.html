@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👑 Super Admin - KinoBot</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #0e1421;
+            color: #e8eef9;
+            min-height: 100vh;
+            padding: 16px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 12px;
+        }
+        .header h1 { font-size: 22px; }
+        .header .subtitle { font-size: 13px; opacity: .7; margin-top: 4px; }
+        .card {
+            background: #182234;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #243043;
+        }
+        .bot-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #243043;
+        }
+        .bot-row:last-child { border-bottom: none; }
+        .bot-name { font-weight: 600; font-size: 16px; }
+        .bot-meta { font-size: 12px; opacity: .7; margin-top: 2px; }
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            margin-left: 4px;
+        }
+        .badge-active { background: #1f5f3a; color: #5fe098; }
+        .badge-paused { background: #5a4a1f; color: #f0c14a; }
+        .badge-expired { background: #5a1f1f; color: #ff7878; }
+        .btn {
+            background: #2a7be4;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .btn:hover { background: #1a6bd0; }
+        .btn-danger { background: #c44; }
+        .btn-warn { background: #b87a00; }
+        .btn-success { background: #1f8d4d; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+        input, textarea, select {
+            width: 100%;
+            background: #0e1421;
+            color: #e8eef9;
+            border: 1px solid #243043;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        label { font-size: 13px; opacity: .8; display: block; margin-top: 10px; }
+        .empty { text-align: center; padding: 30px; opacity: .6; }
+        .form-grid { display: grid; gap: 6px; }
+        .row-flex { display: flex; gap: 8px; }
+        .row-flex > * { flex: 1; }
+        h2 { font-size: 16px; margin-bottom: 8px; }
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2a7be4;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            z-index: 1000;
+            display: none;
+        }
+        .toast.error { background: #c44; }
+        .toast.success { background: #1f8d4d; }
+        .ext-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+        .open-link { color: #5fa9ff; text-decoration: none; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="toast" id="toast"></div>
+
+    <div class="header">
+        <h1>👑 Super Admin Panel</h1>
+        <div class="subtitle">Zakaz botlarni boshqarish</div>
+    </div>
+
+    <div class="card">
+        <h2>➕ Yangi Bot Qo'shish</h2>
+        <div class="form-grid">
+            <label>Bot tokeni
+                <input type="text" id="newToken" placeholder="123456:ABC...">
+            </label>
+            <label>Bot nomi (mijoz uchun)
+                <input type="text" id="newName" placeholder="Mijoz ismi yoki kompaniya">
+            </label>
+            <label>Egasining Telegram ID si
+                <input type="number" id="newOwner" placeholder="123456789">
+            </label>
+            <label>Muddat (kun)
+                <input type="number" id="newDays" value="31" min="1" max="3650">
+            </label>
+            <label>Izoh (ixtiyoriy)
+                <textarea id="newNotes" rows="2" placeholder="Eslatma..."></textarea>
+            </label>
+            <button class="btn btn-success" onclick="createBot()" style="margin-top: 10px;">✅ Bot qo'shish va ishga tushirish</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📋 Botlar Ro'yxati</h2>
+        <div id="botsList"><div class="empty">Yuklanmoqda...</div></div>
+    </div>
+
+    <script>
+        const tg = window.Telegram?.WebApp;
+        if (tg) { tg.expand(); tg.ready(); }
+
+        const API = '/api/super-admin/bots';
+        let myTgId = tg?.initDataUnsafe?.user?.id;
+
+        // Allow URL override for desktop testing
+        const urlTg = new URLSearchParams(location.search).get('tg');
+        if (urlTg) myTgId = parseInt(urlTg);
+
+        function toast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast ${type}`;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3000);
+        }
+
+        function headers() {
+            return { 'Content-Type': 'application/json', 'x-telegram-id': myTgId };
+        }
+
+        async function loadBots() {
+            try {
+                const res = await fetch(API, { headers: headers() });
+                const j = await res.json();
+                if (!j.success) { toast(j.message || 'Xato', 'error'); return; }
+                renderBots(j.data);
+            } catch (e) {
+                toast('Server xatoligi', 'error');
+                console.error(e);
+            }
+        }
+
+        function statusBadge(b) {
+            if (!b.is_active) return '<span class="badge badge-paused">⏸ Pauza</span>';
+            if (b.is_expired) return '<span class="badge badge-expired">❌ Tugagan</span>';
+            return '<span class="badge badge-active">🟢 Faol</span>';
+        }
+
+        function renderBots(bots) {
+            const list = document.getElementById('botsList');
+            if (!bots.length) { list.innerHTML = '<div class="empty">Hali bot qo\'shilmagan</div>'; return; }
+
+            list.innerHTML = bots.map(b => `
+                <div style="padding:12px 0; border-bottom:1px solid #243043;">
+                    <div class="bot-name">${escape(b.name)} ${statusBadge(b)}</div>
+                    <div class="bot-meta">
+                        ${b.username ? '@' + escape(b.username) + ' · ' : ''}
+                        Token: <code>${escape(b.token_masked)}</code><br>
+                        Egasi: <code>${b.owner_telegram_id}</code><br>
+                        Muddat: <b>${new Date(b.expires_at).toLocaleString('uz-UZ')}</b>
+                        (${b.days_left} kun qoldi)<br>
+                        ${b.notes ? '📝 ' + escape(b.notes) + '<br>' : ''}
+                        <a class="open-link" href="/webapp/admin/?bot=${b.id}" target="_blank">🔗 Bu botning admin paneli</a>
+                    </div>
+                    <div class="btn-row">
+                        <div class="ext-btns">
+                            <button class="btn btn-sm" onclick="extend(${b.id}, 7)">+7 kun</button>
+                            <button class="btn btn-sm" onclick="extend(${b.id}, 30)">+30 kun</button>
+                            <button class="btn btn-sm" onclick="extend(${b.id}, 90)">+90 kun</button>
+                            <button class="btn btn-sm" onclick="extendCustom(${b.id})">⌨️ Qo'shimcha</button>
+                        </div>
+                    </div>
+                    <div class="btn-row">
+                        ${b.is_active
+                          ? `<button class="btn btn-sm btn-warn" onclick="setActive(${b.id}, false)">⏸ Pauza</button>`
+                          : `<button class="btn btn-sm btn-success" onclick="setActive(${b.id}, true)">▶️ Faollashtirish</button>`}
+                        <button class="btn btn-sm" onclick="restart(${b.id})">🔄 Restart</button>
+                        <button class="btn btn-sm" onclick="changeToken(${b.id})">🔑 Token o'zgartirish</button>
+                        <button class="btn btn-sm btn-danger" onclick="removeBot(${b.id})">🗑 O'chirish</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escape(s) {
+            if (!s) return '';
+            return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+
+        async function createBot() {
+            const token = document.getElementById('newToken').value.trim();
+            const name = document.getElementById('newName').value.trim();
+            const owner = parseInt(document.getElementById('newOwner').value);
+            const days = parseInt(document.getElementById('newDays').value) || 31;
+            const notes = document.getElementById('newNotes').value.trim();
+            if (!token || !name || !owner) { toast('Barcha asosiy maydonlarni to\'ldiring', 'error'); return; }
+
+            const res = await fetch(API, {
+                method: 'POST',
+                headers: headers(),
+                body: JSON.stringify({ token, name, owner_telegram_id: owner, duration_days: days, notes }),
+            });
+            const j = await res.json();
+            if (j.success) {
+                toast('✅ Bot qo\'shildi va ishga tushirildi');
+                document.getElementById('newToken').value = '';
+                document.getElementById('newName').value = '';
+                document.getElementById('newOwner').value = '';
+                document.getElementById('newNotes').value = '';
+                loadBots();
+            } else {
+                toast(j.message || 'Xato', 'error');
+            }
+        }
+
+        async function extend(id, days) {
+            const res = await fetch(`${API}/${id}/extend`, {
+                method: 'POST',
+                headers: headers(),
+                body: JSON.stringify({ days }),
+            });
+            const j = await res.json();
+            if (j.success) { toast(`+${days} kun qo\'shildi`); loadBots(); }
+            else toast(j.message || 'Xato', 'error');
+        }
+
+        async function extendCustom(id) {
+            const days = prompt('Necha kun qo\'shamiz?', '30');
+            if (!days) return;
+            const n = parseInt(days);
+            if (!n || n < 1) return;
+            await extend(id, n);
+        }
+
+        async function setActive(id, active) {
+            const res = await fetch(`${API}/${id}/active`, {
+                method: 'PATCH',
+                headers: headers(),
+                body: JSON.stringify({ is_active: active }),
+            });
+            const j = await res.json();
+            if (j.success) { toast(active ? '▶️ Faollashtirildi' : '⏸ Pauza qilindi'); loadBots(); }
+            else toast(j.message || 'Xato', 'error');
+        }
+
+        async function restart(id) {
+            const res = await fetch(`${API}/${id}/restart`, { method: 'POST', headers: headers() });
+            const j = await res.json();
+            if (j.success) toast('🔄 Restart qilindi');
+            else toast(j.message || 'Xato', 'error');
+        }
+
+        async function changeToken(id) {
+            const token = prompt('Yangi tokenni kiriting:');
+            if (!token) return;
+            const res = await fetch(`${API}/${id}`, {
+                method: 'PUT',
+                headers: headers(),
+                body: JSON.stringify({ token }),
+            });
+            const j = await res.json();
+            if (j.success) { toast('🔑 Token yangilandi va bot qayta ishga tushirildi'); loadBots(); }
+            else toast(j.message || 'Xato', 'error');
+        }
+
+        async function removeBot(id) {
+            if (!confirm('Bu botni butunlay o\'chirasizmi? (Kontent ham o\'chiriladi)')) return;
+            const res = await fetch(`${API}/${id}`, { method: 'DELETE', headers: headers() });
+            const j = await res.json();
+            if (j.success) { toast('🗑 O\'chirildi'); loadBots(); }
+            else toast(j.message || 'Xato', 'error');
+        }
+
+        // Init
+        if (!myTgId) {
+            document.body.innerHTML = '<div class="card empty">⛔ Telegram WebApp orqali oching yoki ?tg=ID parametri bilan</div>';
+        } else {
+            loadBots();
+        }
+    </script>
+</body>
+</html>

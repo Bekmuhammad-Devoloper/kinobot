@@ -3,8 +3,12 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-// ========== Config ========== 
+// ========== Config ==========
 const API_URL = '/api';
+const BOT_ID = (() => {
+    const p = new URLSearchParams(location.search).get('bot');
+    return p ? parseInt(p) : null;
+})();
 
 // ========== State ========== 
 let currentTab = 'dashboard';
@@ -96,7 +100,8 @@ async function loadDashboard() {
     try {
         const response = await fetch(`${API_URL}/admin/stats/dashboard`, {
             headers: {
-                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || ''
+                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || '',
+                'x-bot-id': (BOT_ID || '').toString()
             }
         });
         const result = await response.json();
@@ -227,7 +232,8 @@ async function loadChannels() {
     try {
         const response = await fetch(`${API_URL}/admin/channels`, {
             headers: {
-                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || ''
+                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || '',
+                'x-bot-id': (BOT_ID || '').toString()
             }
         });
         const result = await response.json();
@@ -344,7 +350,8 @@ async function toggleChannel(id, isActive) {
             method: 'PATCH',
             headers: { 
                 'Content-Type': 'application/json',
-                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || ''
+                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || '',
+                'x-bot-id': (BOT_ID || '').toString()
             },
             body: JSON.stringify({ is_active: isActive })
         });
@@ -365,7 +372,8 @@ async function deleteChannel(id) {
         const response = await fetch(`${API_URL}/admin/channels/${id}`, {
             method: 'DELETE',
             headers: {
-                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || ''
+                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || '',
+                'x-bot-id': (BOT_ID || '').toString()
             }
         });
         
@@ -453,7 +461,8 @@ async function addChannel() {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || ''
+                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || '',
+                'x-bot-id': (BOT_ID || '').toString()
             },
             body: JSON.stringify(requestBody)
         });
@@ -482,7 +491,8 @@ async function loadUsers(page = 1) {
     try {
         const response = await fetch(`${API_URL}/admin/users?page=${page}&limit=${pageSize}`, {
             headers: {
-                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || ''
+                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || '',
+                'x-bot-id': (BOT_ID || '').toString()
             }
         });
         const result = await response.json();
@@ -591,7 +601,8 @@ async function toggleUserBan(id, isBanned) {
             method: 'PATCH',
             headers: { 
                 'Content-Type': 'application/json',
-                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || ''
+                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || '',
+                'x-bot-id': (BOT_ID || '').toString()
             },
             body: JSON.stringify({ isBanned })
         });
@@ -682,7 +693,8 @@ async function loadMovies(page = 1) {
     try {
         const response = await fetch(`${API_URL}/admin/movies?page=${page}&limit=${pageSize}`, {
             headers: {
-                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || ''
+                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || '',
+                'x-bot-id': (BOT_ID || '').toString()
             }
         });
         const result = await response.json();
@@ -821,7 +833,8 @@ async function togglePremiere(id, isPremiere) {
             method: 'PUT',
             headers: { 
                 'Content-Type': 'application/json',
-                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || ''
+                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || '',
+                'x-bot-id': (BOT_ID || '').toString()
             },
             body: JSON.stringify({ is_premiere: isPremiere })
         });
@@ -842,7 +855,8 @@ async function deleteMovie(id) {
         const response = await fetch(`${API_URL}/admin/movies/${id}`, {
             method: 'DELETE',
             headers: {
-                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || ''
+                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || '',
+                'x-bot-id': (BOT_ID || '').toString()
             }
         });
         

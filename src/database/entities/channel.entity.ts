@@ -1,11 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Unique, Index } from 'typeorm';
 
 @Entity('required_channels')
+@Unique(['bot_id', 'channel_id'])
 export class Channel {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 255, unique: true })
+  @Column({ type: 'integer' })
+  @Index()
+  bot_id: number;
+
+  @Column({ type: 'varchar', length: 255 })
   channel_id: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })

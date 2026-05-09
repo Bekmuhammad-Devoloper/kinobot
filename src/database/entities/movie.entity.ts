@@ -1,13 +1,17 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
-import { Admin } from './admin.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, Unique, Index } from 'typeorm';
 import { UserView } from './user-view.entity';
 
 @Entity('movies')
+@Unique(['bot_id', 'code'])
 export class Movie {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
+  @Column({ type: 'integer' })
+  @Index()
+  bot_id: number;
+
+  @Column({ type: 'varchar', length: 50 })
   code: string;
 
   @Column({ type: 'varchar', length: 500 })

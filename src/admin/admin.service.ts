@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { Admin, Movie, User, UserView, Channel } from '../database/entities';
+import { Admin, Movie, User, UserView, Channel, Bot as BotEntity } from '../database/entities';
 
 @Injectable()
 export class AdminService {
-  private adminIds: number[];
+  private readonly superAdminId: number | null;
 
   constructor(
     @InjectRepository(Admin) private readonly adminRepo: Repository<Admin>,
@@ -14,35 +14,32 @@ export class AdminService {
     @InjectRepository(User) private readonly userRepo: Repository<User>,
     @InjectRepository(UserView) private readonly userViewRepo: Repository<UserView>,
     @InjectRepository(Channel) private readonly channelRepo: Repository<Channel>,
+    @InjectRepository(BotEntity) private readonly botRepo: Repository<BotEntity>,
     private readonly configService: ConfigService,
   ) {
-    const adminIdsStr = this.configService.get('ADMIN_IDS', '');
-    this.adminIds = adminIdsStr.split(',').map((id: string) => parseInt(id.trim())).filter((id: number) => !isNaN(id));
+    const sa = this.configService.get<string>('SUPER_ADMIN_TELEGRAM_ID');
+    this.superAdminId = sa ? parseInt(sa) : null;
   }
 
-  isAdmin(telegramId: number): boolean {
-    return this.adminIds.includes(telegramId);
+  async isAdmin(botId: number, telegramId: number): Promise<boolean> {
+    if (this.superAdminId && telegramId === this.superAdminId) return true;
+    const bot = await this.botRepo.findOne({ where: { id: botId } });
+    if (bot && Number(bot.owner_telegram_id) === Number(telegramId)) return true;
+    const admin = await this.adminRepo.findOne({ where: { bot_id: botId, telegram_id: telegramId } });
+    return !!admin;
   }
 
-  async getDashboardStats(): Promise<{
-    totalUsers: number;
-    subscribedUsers: number;
-    totalMovies: number;
-    premiereMovies: number;
-    totalViews: number;
-    todayUsers: number;
-    todayViews: number;
-    totalChannels: number;
-  }> {
-    const totalUsers = await this.userRepo.count();
-    const subscribedUsers = await this.userRepo.count({ where: { is_subscribed: true } });
-    const totalMovies = await this.movieRepo.count();
-    const premiereMovies = await this.movieRepo.count({ where: { is_premiere: true } });
-    const totalChannels = await this.channelRepo.count();
+  async getDashboardStats(botId: number) {
+    const totalUsers = await this.userRepo.count({ where: { bot_id: botId } });
+    const subscribedUsers = await this.userRepo.count({ where: { bot_id: botId, is_subscribed: true } });
+    const totalMovies = await this.movieRepo.count({ where: { bot_id: botId } });
+    const premiereMovies = await this.movieRepo.count({ where: { bot_id: botId, is_premiere: true } });
+    const totalChannels = await this.channelRepo.count({ where: { bot_id: botId } });
 
     const viewsResult = await this.movieRepo
       .createQueryBuilder('movie')
       .select('SUM(movie.views_count)', 'total')
+      .where('movie.bot_id = :botId', { botId })
       .getRawOne();
     const totalViews = parseInt(viewsResult?.total || '0');
 
@@ -50,12 +47,14 @@ export class AdminService {
     today.setHours(0, 0, 0, 0);
     const todayUsers = await this.userRepo
       .createQueryBuilder('user')
-      .where('user.created_at >= :today', { today })
+      .where('user.bot_id = :botId', { botId })
+      .andWhere('user.created_at >= :today', { today })
       .getCount();
-    
+
     const todayViews = await this.userViewRepo
       .createQueryBuilder('view')
-      .where('view.viewed_at >= :today', { today })
+      .where('view.bot_id = :botId', { botId })
+      .andWhere('view.viewed_at >= :today', { today })
       .getCount();
 
     return {
@@ -70,16 +69,13 @@ export class AdminService {
     };
   }
 
-  async getMovieStats(): Promise<{
-    topMovies: Movie[];
-    weeklyViews: { date: string; count: number }[];
-  }> {
+  async getMovieStats(botId: number) {
     const topMovies = await this.movieRepo.find({
+      where: { bot_id: botId },
       order: { views_count: 'DESC' },
       take: 10,
     });
 
-    // Weekly views
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
 
@@ -87,7 +83,8 @@ export class AdminService {
       .createQueryBuilder('view')
       .select("DATE(view.viewed_at)", 'date')
       .addSelect('COUNT(*)', 'count')
-      .where('view.viewed_at >= :weekAgo', { weekAgo })
+      .where('view.bot_id = :botId', { botId })
+      .andWhere('view.viewed_at >= :weekAgo', { weekAgo })
       .groupBy("DATE(view.viewed_at)")
       .orderBy('date', 'ASC')
       .getRawMany();
@@ -100,7 +97,7 @@ export class AdminService {
     return { topMovies, weeklyViews };
   }
 
-  async getUserActivity(): Promise<{ date: string; newUsers: number }[]> {
+  async getUserActivity(botId: number) {
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
 
@@ -108,7 +105,8 @@ export class AdminService {
       .createQueryBuilder('user')
       .select("DATE(user.created_at)", 'date')
       .addSelect('COUNT(*)', 'count')
-      .where('user.created_at >= :weekAgo', { weekAgo })
+      .where('user.bot_id = :botId', { botId })
+      .andWhere('user.created_at >= :weekAgo', { weekAgo })
       .groupBy("DATE(user.created_at)")
       .orderBy('date', 'ASC')
       .getRawMany();

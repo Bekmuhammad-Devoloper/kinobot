@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User, UserView } from '../database/entities';
 
 @Injectable()
@@ -11,17 +11,19 @@ export class UsersService {
   ) {}
 
   async findAll(
+    botId: number,
     page: number = 1,
     limit: number = 10,
     filter?: 'all' | 'subscribed' | 'unsubscribed',
     search?: string,
   ): Promise<{ users: User[]; total: number; pages: number }> {
-    const queryBuilder = this.userRepo.createQueryBuilder('user');
+    const queryBuilder = this.userRepo.createQueryBuilder('user')
+      .where('user.bot_id = :botId', { botId });
 
     if (filter === 'subscribed') {
-      queryBuilder.where('user.is_subscribed = :subscribed', { subscribed: true });
+      queryBuilder.andWhere('user.is_subscribed = :subscribed', { subscribed: true });
     } else if (filter === 'unsubscribed') {
-      queryBuilder.where('user.is_subscribed = :subscribed', { subscribed: false });
+      queryBuilder.andWhere('user.is_subscribed = :subscribed', { subscribed: false });
     }
 
     if (search) {
@@ -40,24 +42,24 @@ export class UsersService {
     return { users, total, pages: Math.ceil(total / limit) };
   }
 
-  async findByTelegramId(telegramId: number): Promise<User | null> {
-    return this.userRepo.findOne({ where: { telegram_id: telegramId } });
+  async findByTelegramId(botId: number, telegramId: number): Promise<User | null> {
+    return this.userRepo.findOne({ where: { telegram_id: telegramId, bot_id: botId } });
   }
 
-  async getUserViews(telegramId: number): Promise<UserView[]> {
+  async getUserViews(botId: number, telegramId: number): Promise<UserView[]> {
     return this.userViewRepo.find({
-      where: { user_id: telegramId },
+      where: { user_id: telegramId, bot_id: botId },
       relations: ['movie'],
       order: { viewed_at: 'DESC' },
     });
   }
 
-  async getUserStats(telegramId: number): Promise<{
+  async getUserStats(botId: number, telegramId: number): Promise<{
     viewsCount: number;
     lastView: Date | null;
   }> {
     const views = await this.userViewRepo.find({
-      where: { user_id: telegramId },
+      where: { user_id: telegramId, bot_id: botId },
       order: { viewed_at: 'DESC' },
     });
 
@@ -67,29 +69,30 @@ export class UsersService {
     };
   }
 
-  async getTotalCount(): Promise<number> {
-    return this.userRepo.count();
+  async getTotalCount(botId: number): Promise<number> {
+    return this.userRepo.count({ where: { bot_id: botId } });
   }
 
-  async getSubscribedCount(): Promise<number> {
-    return this.userRepo.count({ where: { is_subscribed: true } });
+  async getSubscribedCount(botId: number): Promise<number> {
+    return this.userRepo.count({ where: { bot_id: botId, is_subscribed: true } });
   }
 
-  async getTodayNewUsersCount(): Promise<number> {
+  async getTodayNewUsersCount(botId: number): Promise<number> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     return this.userRepo
       .createQueryBuilder('user')
-      .where('user.created_at >= :today', { today })
+      .where('user.bot_id = :botId', { botId })
+      .andWhere('user.created_at >= :today', { today })
       .getCount();
   }
 
-  async setBanned(id: number, isBanned: boolean): Promise<void> {
-    await this.userRepo.update(id, { is_banned: isBanned });
+  async setBanned(botId: number, id: number, isBanned: boolean): Promise<void> {
+    await this.userRepo.update({ id, bot_id: botId }, { is_banned: isBanned });
   }
 
-  async findById(id: number): Promise<User | null> {
-    return this.userRepo.findOne({ where: { id } });
+  async findById(botId: number, id: number): Promise<User | null> {
+    return this.userRepo.findOne({ where: { id, bot_id: botId } });
   }
 }

@@ -1,12 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Unique } from 'typeorm';
-import { User } from './user.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Unique, Index } from 'typeorm';
 import { Movie } from './movie.entity';
 
 @Entity('user_views')
-@Unique(['user_id', 'movie_id'])
+@Unique(['bot_id', 'user_id', 'movie_id'])
 export class UserView {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ type: 'integer' })
+  @Index()
+  bot_id: number;
 
   @Column({ type: 'bigint' })
   user_id: number;
@@ -17,11 +20,7 @@ export class UserView {
   @CreateDateColumn()
   viewed_at: Date;
 
-  @ManyToOne(() => User, (user) => user.views)
-  @JoinColumn({ name: 'user_id', referencedColumnName: 'telegram_id' })
-  user: User;
-
-  @ManyToOne(() => Movie, (movie) => movie.views)
+  @ManyToOne(() => Movie, (movie) => movie.views, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'movie_id' })
   movie: Movie;
 }

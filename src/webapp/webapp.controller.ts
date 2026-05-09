@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Headers, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { WebappService } from './webapp.service';
 import { MoviesService } from '../movies/movies.service';
 
@@ -19,8 +19,10 @@ export class WebappController {
   }
 
   @Get('premiere')
-  async getPremiereMovies() {
-    const movies = await this.moviesService.findPremiere();
+  async getPremiereMovies(@Query('bot') botIdQ: string) {
+    const botId = parseInt(botIdQ || '0');
+    if (!botId) throw new BadRequestException('bot query param required');
+    const movies = await this.moviesService.findPremiere(botId);
     return {
       success: true,
       data: movies.map(movie => ({
@@ -28,7 +30,7 @@ export class WebappController {
         code: movie.code,
         title: movie.title,
         description: movie.description,
-        thumbnailFileId: movie.thumbnail_file_id ? `/api/photo/thumbnail/${movie.thumbnail_file_id}` : null,
+        thumbnailFileId: movie.thumbnail_file_id ? `/api/photo/thumbnail/${movie.thumbnail_file_id}?bot=${botId}` : null,
         viewsCount: movie.views_count,
         duration: movie.duration,
       })),

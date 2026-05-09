@@ -1,3 +1,4 @@
+export * from './bot.entity';
 export * from './admin.entity';
 export * from './user.entity';
 export * from './movie.entity';

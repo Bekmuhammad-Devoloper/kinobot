@@ -3,8 +3,12 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-// ========== Config ========== 
+// ========== Config ==========
 const API_URL = '/api';
+const BOT_ID = (() => {
+    const p = new URLSearchParams(location.search).get('bot');
+    return p ? parseInt(p) : null;
+})();
 
 // ========== State ========== 
 let movies = [];
@@ -45,7 +49,7 @@ async function loadMovies() {
     showLoading();
     
     try {
-        const response = await fetch(`${API_URL}/webapp/premiere`);
+        const response = await fetch(`${API_URL}/webapp/premiere?bot=${BOT_ID || ''}`);
         const result = await response.json();
         
         hideLoading();

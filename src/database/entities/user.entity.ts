@@ -1,12 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
-import { UserView } from './user-view.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Unique, Index } from 'typeorm';
 
 @Entity('users')
+@Unique(['bot_id', 'telegram_id'])
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'bigint', unique: true })
+  @Column({ type: 'integer' })
+  @Index()
+  bot_id: number;
+
+  @Column({ type: 'bigint' })
   telegram_id: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -32,7 +36,4 @@ export class User {
 
   @UpdateDateColumn()
   updated_at: Date;
-
-  @OneToMany(() => UserView, (userView) => userView.user)
-  views: UserView[];
 }

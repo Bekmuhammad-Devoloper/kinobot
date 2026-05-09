@@ -1,14 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
-import { InjectBot } from 'nestjs-telegraf';
 import { Telegraf, Context } from 'telegraf';
 import axios from 'axios';
-import { User, Admin, Movie, Channel, UserView } from '../database/entities';
+import { User, Admin, Movie, Channel, UserView, Bot as BotEntity } from '../database/entities';
 
 export interface MovieSessionData extends Partial<Movie> {
-  auto_thumbnail_file_id?: string; // Video dan avtomatik olingan thumbnail
+  auto_thumbnail_file_id?: string;
 }
 
 export interface SessionData {
@@ -22,48 +20,29 @@ export interface SessionData {
 
 export interface BotContext extends Context {
   session: SessionData;
+  botId: number;
+  botToken: string;
 }
 
 @Injectable()
 export class TelegramService {
-  private adminIds: number[];
-
   constructor(
-    @InjectBot() private readonly bot: Telegraf<BotContext>,
     @InjectRepository(User) private readonly userRepo: Repository<User>,
     @InjectRepository(Admin) private readonly adminRepo: Repository<Admin>,
     @InjectRepository(Movie) private readonly movieRepo: Repository<Movie>,
     @InjectRepository(Channel) private readonly channelRepo: Repository<Channel>,
     @InjectRepository(UserView) private readonly userViewRepo: Repository<UserView>,
-    private readonly configService: ConfigService,
-  ) {
-    const adminIdsStr = this.configService.get('ADMIN_IDS', '');
-    this.adminIds = adminIdsStr.split(',').map((id: string) => parseInt(id.trim())).filter((id: number) => !isNaN(id));
-  }
+    @InjectRepository(BotEntity) private readonly botRepo: Repository<BotEntity>,
+  ) {}
 
-  // ============ USER METHODS ============
+  // ============ FILE / PHOTO HELPERS (require Telegraf instance) ============
 
-  async getUserPhotoUrl(telegramId: number): Promise<string | null> {
+  async getUserPhotoBuffer(tg: Telegraf, telegramId: number): Promise<Buffer | null> {
     try {
-      const photos = await this.bot.telegram.getUserProfilePhotos(telegramId, 0, 1);
+      const photos = await tg.telegram.getUserProfilePhotos(telegramId, 0, 1);
       if (photos.total_count > 0 && photos.photos[0]?.length > 0) {
         const fileId = photos.photos[0][photos.photos[0].length - 1].file_id;
-        const file = await this.bot.telegram.getFile(fileId);
-        return `https://api.telegram.org/file/bot${this.configService.get('BOT_TOKEN')}/${file.file_path}`;
-      }
-    } catch (error) {
-      console.error('Error getting user photo:', error);
-    }
-    return null;
-  }
-
-  async getUserPhotoBuffer(telegramId: number): Promise<Buffer | null> {
-    try {
-      const photos = await this.bot.telegram.getUserProfilePhotos(telegramId, 0, 1);
-      if (photos.total_count > 0 && photos.photos[0]?.length > 0) {
-        const fileId = photos.photos[0][photos.photos[0].length - 1].file_id;
-        const fileLink = await this.bot.telegram.getFileLink(fileId);
-        
+        const fileLink = await tg.telegram.getFileLink(fileId);
         const response = await axios.get(fileLink.toString(), { responseType: 'arraybuffer' });
         return Buffer.from(response.data);
       }
@@ -73,12 +52,11 @@ export class TelegramService {
     return null;
   }
 
-  async getChannelPhotoBuffer(channelId: string): Promise<Buffer | null> {
+  async getChannelPhotoBuffer(tg: Telegraf, channelId: string): Promise<Buffer | null> {
     try {
-      const chat = await this.bot.telegram.getChat(channelId);
-      if (chat.photo) {
-        const fileLink = await this.bot.telegram.getFileLink(chat.photo.big_file_id);
-        
+      const chat = await tg.telegram.getChat(channelId);
+      if ((chat as any).photo) {
+        const fileLink = await tg.telegram.getFileLink((chat as any).photo.big_file_id);
         const response = await axios.get(fileLink.toString(), { responseType: 'arraybuffer' });
         return Buffer.from(response.data);
       }
@@ -88,9 +66,9 @@ export class TelegramService {
     return null;
   }
 
-  async getFileBuffer(fileId: string): Promise<Buffer | null> {
+  async getFileBuffer(tg: Telegraf, fileId: string): Promise<Buffer | null> {
     try {
-      const fileLink = await this.bot.telegram.getFileLink(fileId);
+      const fileLink = await tg.telegram.getFileLink(fileId);
       const response = await axios.get(fileLink.toString(), { responseType: 'arraybuffer' });
       return Buffer.from(response.data);
     } catch (error) {
@@ -99,41 +77,45 @@ export class TelegramService {
     return null;
   }
 
-  async findOrCreateUser(telegramId: number, username?: string, fullName?: string): Promise<User> {
-    let user = await this.userRepo.findOne({ where: { telegram_id: telegramId } });
-    const isNewUser = !user;
-    
-    // Get user photo
-    const photoUrl = await this.getUserPhotoUrl(telegramId);
-    
+  async getChannelPhotoUrlViaProxy(channelId: string): Promise<string> {
+    const safe = encodeURIComponent(channelId);
+    return `/api/photo/channel/${safe}`;
+  }
+
+  // ============ USER METHODS ============
+
+  async findOrCreateUser(botId: number, telegramId: number, username?: string, fullName?: string): Promise<User> {
+    let user = await this.userRepo.findOne({ where: { bot_id: botId, telegram_id: telegramId } });
+
     if (!user) {
       user = this.userRepo.create({
+        bot_id: botId,
         telegram_id: telegramId,
         username: username || null,
         full_name: fullName || null,
-        photo_url: photoUrl,
       });
       await this.userRepo.save(user);
-      
-      // Increment bot_users_count for all active channels
-      const activeChannels = await this.getActiveChannels();
+
+      const activeChannels = await this.getActiveChannels(botId);
       for (const channel of activeChannels) {
-        await this.incrementChannelBotUsers(channel.channel_id);
+        await this.incrementChannelBotUsers(botId, channel.channel_id);
       }
     } else {
-      // Update user info if changed
-      if (username !== undefined) user.username = username;
-      if (fullName !== undefined) user.full_name = fullName;
-      if (photoUrl) user.photo_url = photoUrl;
-      user.updated_at = new Date();
-      await this.userRepo.save(user);
+      let changed = false;
+      if (username !== undefined && user.username !== username) { user.username = username; changed = true; }
+      if (fullName !== undefined && user.full_name !== fullName) { user.full_name = fullName; changed = true; }
+      if (changed) {
+        user.updated_at = new Date();
+        await this.userRepo.save(user);
+      }
     }
-    
+
     return user;
   }
 
-  async getAllUsers(page: number = 1, limit: number = 10): Promise<{ users: User[]; total: number }> {
+  async getAllUsers(botId: number, page: number = 1, limit: number = 10): Promise<{ users: User[]; total: number }> {
     const [users, total] = await this.userRepo.findAndCount({
+      where: { bot_id: botId },
       skip: (page - 1) * limit,
       take: limit,
       order: { created_at: 'DESC' },
@@ -141,12 +123,12 @@ export class TelegramService {
     return { users, total };
   }
 
-  async getUserStats(telegramId: number): Promise<{ viewsCount: number; lastView: Date | null }> {
+  async getUserStats(botId: number, telegramId: number): Promise<{ viewsCount: number; lastView: Date | null }> {
     const views = await this.userViewRepo.find({
-      where: { user_id: telegramId },
+      where: { bot_id: botId, user_id: telegramId },
       order: { viewed_at: 'DESC' },
     });
-    
+
     return {
       viewsCount: views.length,
       lastView: views.length > 0 ? views[0].viewed_at : null,
@@ -155,63 +137,54 @@ export class TelegramService {
 
   // ============ ADMIN METHODS ============
 
-  isAdmin(telegramId: number): boolean {
-    return this.adminIds.includes(telegramId);
+  async isAdmin(botId: number, telegramId: number): Promise<boolean> {
+    // Owner of the bot is always admin
+    const bot = await this.botRepo.findOne({ where: { id: botId } });
+    if (bot && Number(bot.owner_telegram_id) === Number(telegramId)) return true;
+
+    const admin = await this.adminRepo.findOne({ where: { bot_id: botId, telegram_id: telegramId } });
+    return !!admin;
   }
 
-  async findOrCreateAdmin(telegramId: number, username?: string, fullName?: string): Promise<Admin | null> {
-    if (!this.isAdmin(telegramId)) return null;
-    
-    let admin = await this.adminRepo.findOne({ where: { telegram_id: telegramId } });
-    
+  async findOrCreateAdmin(botId: number, telegramId: number, username?: string, fullName?: string): Promise<Admin | null> {
+    const bot = await this.botRepo.findOne({ where: { id: botId } });
+    if (!bot || Number(bot.owner_telegram_id) !== Number(telegramId)) {
+      // Only the owner is auto-promoted
+      const existing = await this.adminRepo.findOne({ where: { bot_id: botId, telegram_id: telegramId } });
+      return existing || null;
+    }
+
+    let admin = await this.adminRepo.findOne({ where: { bot_id: botId, telegram_id: telegramId } });
+
     if (!admin) {
       admin = this.adminRepo.create({
+        bot_id: botId,
         telegram_id: telegramId,
         username: username || null,
         full_name: fullName || null,
       });
       await this.adminRepo.save(admin);
     }
-    
+
     return admin;
   }
 
   // ============ CHANNEL METHODS ============
 
-  async getChannelPhotoUrl(chatId: string): Promise<string | null> {
-    try {
-      const chat = await this.bot.telegram.getChat(chatId);
-      if (chat.photo) {
-        const file = await this.bot.telegram.getFile(chat.photo.big_file_id);
-        return `https://api.telegram.org/file/bot${this.configService.get('BOT_TOKEN')}/${file.file_path}`;
-      }
-    } catch (error) {
-      console.error('Error getting channel photo:', error);
-    }
-    return null;
+  async getActiveChannels(botId: number): Promise<Channel[]> {
+    return this.channelRepo.find({ where: { bot_id: botId, is_active: true } });
   }
 
-  async getActiveChannels(): Promise<Channel[]> {
-    return this.channelRepo.find({ where: { is_active: true } });
-  }
+  async getAllChannelsWithDetails(botId: number, tg: Telegraf): Promise<Channel[]> {
+    const channels = await this.channelRepo.find({ where: { bot_id: botId }, order: { created_at: 'DESC' } });
+    const totalUsers = await this.userRepo.count({ where: { bot_id: botId } });
 
-  async getAllChannelsWithDetails(): Promise<Channel[]> {
-    const channels = await this.channelRepo.find({ order: { created_at: 'DESC' } });
-    const totalUsers = await this.userRepo.count();
-    
-    // Get photo and member count for each channel
     for (const channel of channels) {
       try {
-        const photoUrl = await this.getChannelPhotoUrl(channel.channel_id);
-        if (photoUrl) channel.photo_url = photoUrl;
-        
-        const chat = await this.bot.telegram.getChat(channel.channel_id);
+        const chat = await tg.telegram.getChat(channel.channel_id);
         if ('title' in chat) {
           channel.channel_title = chat.title;
         }
-        
-        // Har doim bot_users_count ni totalUsers ga tenglashtir
-        // chunki barcha userlar botdan foydalanadi
         if (channel.bot_users_count !== totalUsers) {
           channel.bot_users_count = totalUsers;
           await this.channelRepo.update(channel.id, { bot_users_count: totalUsers });
@@ -220,69 +193,64 @@ export class TelegramService {
         console.error(`Error getting channel details for ${channel.channel_id}:`, error);
       }
     }
-    
+
     return channels;
   }
 
-  async addChannel(channelData: Partial<Channel>): Promise<Channel> {
-    // Get channel photo
-    const photoUrl = await this.getChannelPhotoUrl(channelData.channel_id);
-    if (photoUrl) channelData.photo_url = photoUrl;
-    
-    const channel = this.channelRepo.create(channelData);
+  async addChannel(botId: number, channelData: Partial<Channel>): Promise<Channel> {
+    const channel = this.channelRepo.create({ ...channelData, bot_id: botId });
     return this.channelRepo.save(channel);
   }
 
-  async removeChannel(channelId: string): Promise<void> {
-    await this.channelRepo.delete({ channel_id: channelId });
+  async removeChannel(botId: number, channelId: string): Promise<void> {
+    await this.channelRepo.delete({ bot_id: botId, channel_id: channelId });
   }
 
-  async incrementChannelBotUsers(channelId: string): Promise<void> {
-    await this.channelRepo.increment({ channel_id: channelId }, 'bot_users_count', 1);
+  async incrementChannelBotUsers(botId: number, channelId: string): Promise<void> {
+    await this.channelRepo.increment({ bot_id: botId, channel_id: channelId }, 'bot_users_count', 1);
   }
 
-  async checkUserSubscription(telegramId: number): Promise<{ subscribed: boolean; unsubscribedChannels: Channel[] }> {
-    const channels = await this.getActiveChannels();
+  async checkUserSubscription(botId: number, tg: Telegraf, telegramId: number): Promise<{ subscribed: boolean; unsubscribedChannels: Channel[] }> {
+    const channels = await this.getActiveChannels(botId);
     const unsubscribedChannels: Channel[] = [];
-    
+
     for (const channel of channels) {
       try {
-        const member = await this.bot.telegram.getChatMember(channel.channel_id, telegramId);
+        const member = await tg.telegram.getChatMember(channel.channel_id, telegramId);
         if (!['member', 'administrator', 'creator'].includes(member.status)) {
           unsubscribedChannels.push(channel);
         }
       } catch (error) {
-        // If we can't check, assume not subscribed
         unsubscribedChannels.push(channel);
       }
     }
-    
+
     const subscribed = unsubscribedChannels.length === 0;
-    
-    // Update user subscription status
+
     await this.userRepo.update(
-      { telegram_id: telegramId },
+      { bot_id: botId, telegram_id: telegramId },
       { is_subscribed: subscribed, last_subscription_check: new Date() }
     );
-    
+
     return { subscribed, unsubscribedChannels };
   }
 
   // ============ MOVIE METHODS ============
 
-  async getMovieByCode(code: string): Promise<Movie | null> {
-    return this.movieRepo.findOne({ where: { code: code.toUpperCase() } });
+  async getMovieByCode(botId: number, code: string): Promise<Movie | null> {
+    return this.movieRepo.findOne({ where: { bot_id: botId, code: code.toUpperCase() } });
   }
 
-  async getPremiereMovies(): Promise<Movie[]> {
+  async getPremiereMovies(botId: number): Promise<Movie[]> {
     return this.movieRepo.find({
-      where: { is_premiere: true },
+      where: { bot_id: botId, is_premiere: true },
       order: { premiere_order: 'ASC' },
     });
   }
 
-  async getAllMovies(page: number = 1, limit: number = 10): Promise<{ movies: Movie[]; total: number }> {
+  async getAllMovies(botId: number, page: number = 1, limit: number = 10): Promise<{ movies: Movie[]; total: number }> {
     const [movies, total] = await this.movieRepo.findAndCount({
+      where: { bot_id: botId },
       skip: (page - 1) * limit,
       take: limit,
       order: { created_at: 'DESC' },
@@ -290,52 +258,49 @@ export class TelegramService {
     return { movies, total };
   }
 
-  async createMovie(movieData: Partial<Movie>): Promise<Movie> {
+  async createMovie(botId: number, movieData: Partial<Movie>): Promise<Movie> {
     movieData.code = movieData.code.toUpperCase();
-    const movie = this.movieRepo.create(movieData);
+    const movie = this.movieRepo.create({ ...movieData, bot_id: botId });
     return this.movieRepo.save(movie);
   }
 
-  async updateMovie(id: number, movieData: Partial<Movie>): Promise<Movie> {
-    await this.movieRepo.update(id, movieData);
-    return this.movieRepo.findOne({ where: { id } });
+  async updateMovie(botId: number, id: number, movieData: Partial<Movie>): Promise<Movie> {
+    await this.movieRepo.update({ id, bot_id: botId }, movieData);
+    return this.movieRepo.findOne({ where: { id, bot_id: botId } });
   }
 
-  async deleteMovie(id: number): Promise<void> {
-    await this.userViewRepo.delete({ movie_id: id });
-    await this.movieRepo.delete(id);
+  async deleteMovie(botId: number, id: number): Promise<void> {
+    await this.userViewRepo.delete({ bot_id: botId, movie_id: id });
+    await this.movieRepo.delete({ id, bot_id: botId });
   }
 
-  async incrementMovieViews(movieId: number, userId: number): Promise<void> {
-    // Check if user already viewed this movie
+  async incrementMovieViews(botId: number, movieId: number, userId: number): Promise<void> {
     const existingView = await this.userViewRepo.findOne({
-      where: { user_id: userId, movie_id: movieId },
+      where: { bot_id: botId, user_id: userId, movie_id: movieId },
     });
-    
+
     if (!existingView) {
-      // Create new view record
       const view = this.userViewRepo.create({
+        bot_id: botId,
         user_id: userId,
         movie_id: movieId,
       });
       await this.userViewRepo.save(view);
-      
-      // Increment views count
-      await this.movieRepo.increment({ id: movieId }, 'views_count', 1);
+      await this.movieRepo.increment({ id: movieId, bot_id: botId }, 'views_count', 1);
     }
   }
 
-  async setMoviePremiere(movieId: number, isPremiere: boolean, order?: number): Promise<void> {
+  async setMoviePremiere(botId: number, movieId: number, isPremiere: boolean, order?: number): Promise<void> {
     const updateData: Partial<Movie> = { is_premiere: isPremiere };
     if (order !== undefined) {
       updateData.premiere_order = order;
     }
-    await this.movieRepo.update(movieId, updateData);
+    await this.movieRepo.update({ id: movieId, bot_id: botId }, updateData);
   }
 
   // ============ STATISTICS METHODS ============
 
-  async getDashboardStats(): Promise<{
+  async getDashboardStats(botId: number): Promise<{
     totalUsers: number;
     subscribedUsers: number;
     totalMovies: number;
@@ -343,24 +308,26 @@ export class TelegramService {
     totalViews: number;
     todayNewUsers: number;
   }> {
-    const totalUsers = await this.userRepo.count();
-    const subscribedUsers = await this.userRepo.count({ where: { is_subscribed: true } });
-    const totalMovies = await this.movieRepo.count();
-    const premiereMovies = await this.movieRepo.count({ where: { is_premiere: true } });
-    
+    const totalUsers = await this.userRepo.count({ where: { bot_id: botId } });
+    const subscribedUsers = await this.userRepo.count({ where: { bot_id: botId, is_subscribed: true } });
+    const totalMovies = await this.movieRepo.count({ where: { bot_id: botId } });
+    const premiereMovies = await this.movieRepo.count({ where: { bot_id: botId, is_premiere: true } });
+
     const viewsResult = await this.movieRepo
       .createQueryBuilder('movie')
       .select('SUM(movie.views_count)', 'total')
+      .where('movie.bot_id = :botId', { botId })
       .getRawOne();
     const totalViews = parseInt(viewsResult?.total || '0');
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayNewUsers = await this.userRepo
       .createQueryBuilder('user')
-      .where('user.created_at >= :today', { today })
+      .where('user.bot_id = :botId', { botId })
+      .andWhere('user.created_at >= :today', { today })
       .getCount();
-    
+
     return {
       totalUsers,
       subscribedUsers,
@@ -371,20 +338,19 @@ export class TelegramService {
     };
   }
 
-  async getTopMovies(limit: number = 10): Promise<Movie[]> {
+  async getTopMovies(botId: number, limit: number = 10): Promise<Movie[]> {
     return this.movieRepo.find({
+      where: { bot_id: botId },
       order: { views_count: 'DESC' },
       take: limit,
     });
   }
 
-  // ============ ADDITIONAL MOVIE METHODS ============
-
-  async getMovieById(id: number): Promise<Movie | null> {
-    return this.movieRepo.findOne({ where: { id } });
+  async getMovieById(botId: number, id: number): Promise<Movie | null> {
+    return this.movieRepo.findOne({ where: { id, bot_id: botId } });
   }
 
-  async getMovieStats(movieId: number): Promise<{
+  async getMovieStats(botId: number, movieId: number): Promise<{
     id: number;
     title: string;
     code: string;
@@ -395,40 +361,36 @@ export class TelegramService {
     lastViewedAt: Date | null;
     createdAt: Date;
   } | null> {
-    const movie = await this.movieRepo.findOne({ where: { id: movieId } });
+    const movie = await this.movieRepo.findOne({ where: { id: movieId, bot_id: botId } });
     if (!movie) return null;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     weekAgo.setHours(0, 0, 0, 0);
 
-    // Get unique viewers count
     const uniqueViewers = await this.userViewRepo
       .createQueryBuilder('view')
-      .where('view.movie_id = :movieId', { movieId })
+      .where('view.bot_id = :botId AND view.movie_id = :movieId', { botId, movieId })
       .select('COUNT(DISTINCT view.user_id)', 'count')
       .getRawOne();
 
-    // Get today's views
     const todayViews = await this.userViewRepo
       .createQueryBuilder('view')
-      .where('view.movie_id = :movieId', { movieId })
+      .where('view.bot_id = :botId AND view.movie_id = :movieId', { botId, movieId })
       .andWhere('view.viewed_at >= :today', { today })
       .getCount();
 
-    // Get weekly views
     const weeklyViews = await this.userViewRepo
       .createQueryBuilder('view')
-      .where('view.movie_id = :movieId', { movieId })
+      .where('view.bot_id = :botId AND view.movie_id = :movieId', { botId, movieId })
       .andWhere('view.viewed_at >= :weekAgo', { weekAgo })
       .getCount();
 
-    // Get last viewed at
     const lastView = await this.userViewRepo.findOne({
-      where: { movie_id: movieId },
+      where: { bot_id: botId, movie_id: movieId },
       order: { viewed_at: 'DESC' },
     });
 

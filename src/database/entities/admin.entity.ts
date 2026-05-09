@@ -1,11 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Unique, Index } from 'typeorm';
 
 @Entity('admins')
+@Unique(['bot_id', 'telegram_id'])
 export class Admin {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'bigint', unique: true })
+  @Column({ type: 'integer' })
+  @Index()
+  bot_id: number;
+
+  @Column({ type: 'bigint' })
   telegram_id: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
