@@ -95,65 +95,147 @@ export function registerBotHandlers(
     }
   }
 
+  // YANGI FLOW:
+  //   step 1 — video/animation/video_note/document kutilmoqda
+  //   step 2 — kino kodi (text)
+  //   step 3 — kino nomi (text)
+  //   step 4 — tavsif (text yoki ⏭ O'tkazib yuborish)
+  //   step 5 — premyera (✅ Ha / ❌ Yo'q)
   async function handleUploadMovieScene(ctx: BotContext, text: string) {
     const step = ctx.session.step;
 
     switch (step) {
-      case 1: {
-        const existing = await svc.getMovieByCode(botId, text);
-        if (existing) {
-          await ctx.reply('❌ Bu kod bilan kino mavjud! Boshqa kod kiriting:');
+      case 1:
+        // Hali video kelmagan, lekin user matn yozib qo'ydi
+        await ctx.reply(
+          '⚠️ *Hozir kino faylini kutyapman*\n\n' +
+          'Iltimos, video / animation / dumaloq video yoki document yuboring.\n\n' +
+          '_Boshidan boshlash uchun "❌ Bekor qilish" tugmasini bosing._',
+          { parse_mode: 'Markdown' }
+        );
+        break;
+
+      case 2: {
+        const code = text.trim().toUpperCase();
+        if (!code || code.length < 2) {
+          await ctx.reply(
+            '❌ Kod juda qisqa.\n\n' +
+            'Kamida *2 belgi* bo\'lishi kerak. Misollar: `KN001`, `BARBIE`, `OPP24`',
+            { parse_mode: 'Markdown' }
+          );
           return;
         }
-        ctx.session.movieData.code = text.toUpperCase();
-        ctx.session.step = 2;
-        await ctx.reply('2️⃣ Kino nomini kiriting:', AdminKeyboard.cancel());
+        if (code.length > 50) {
+          await ctx.reply('❌ Kod juda uzun (max 50 belgi). Qisqaroq variant kiriting:');
+          return;
+        }
+        const existing = await svc.getMovieByCode(botId, code);
+        if (existing) {
+          await ctx.reply(
+            `❌ Bu kod (\`${code}\`) bilan kino allaqachon mavjud!\n\n` +
+            'Boshqa kod kiriting 👇',
+            { parse_mode: 'Markdown' }
+          );
+          return;
+        }
+        ctx.session.movieData.code = code;
+        ctx.session.step = 3;
+        await ctx.reply(
+          `✅ Kod saqlandi: \`${code}\` (3/5)\n` +
+          '━━━━━━━━━━━━━━━━━━\n\n' +
+          '🎬 *Uchinchi qadam:* kino *nomini* kiriting.\n\n' +
+          '_Bu nom foydalanuvchilarga ko\'rinadi va premyera ro\'yxatida chiqadi._\n\n' +
+          'Misol: `Barbie (2024)`\n\n' +
+          'Endi nomni yozing 👇',
+          { parse_mode: 'Markdown', ...AdminKeyboard.cancel() }
+        );
         break;
       }
-      case 2:
-        ctx.session.movieData.title = text;
-        ctx.session.step = 3;
-        await ctx.reply('3️⃣ Kino tavsifini kiriting:', AdminKeyboard.skipOrCancel());
-        break;
 
       case 3:
-        if (text !== '⏭ O\'tkazib yuborish') {
-          ctx.session.movieData.description = text;
+        if (!text.trim()) {
+          await ctx.reply('❌ Nom bo\'sh bo\'lishi mumkin emas. Iltimos, qayta kiriting:');
+          return;
         }
+        if (text.length > 500) {
+          await ctx.reply('❌ Nom juda uzun (max 500 belgi). Qisqaroq yozing:');
+          return;
+        }
+        ctx.session.movieData.title = text.trim();
         ctx.session.step = 4;
-        await ctx.reply('4️⃣ Video faylni yuboring:', AdminKeyboard.cancel());
+        await ctx.reply(
+          `✅ Nom saqlandi: *${text.trim()}* (4/5)\n` +
+          '━━━━━━━━━━━━━━━━━━\n\n' +
+          '📝 *To\'rtinchi qadam:* kino *tavsifi*.\n\n' +
+          '_Tavsif — janr, qisqa syujet yoki yil. Foydalanuvchi kino ustiga bossa shu matn ko\'rinadi._\n\n' +
+          'Misol: `🎭 Komediya, 2024-yil. Barbie haqiqiy dunyoga sayohat qiladi.`\n\n' +
+          '⏭ Tavsif kerak bo\'lmasa "O\'tkazib yuborish" tugmasini bosing.',
+          { parse_mode: 'Markdown', ...AdminKeyboard.skipOrCancel() }
+        );
         break;
 
-      case 5:
-        if (text === '⏭ O\'tkazib yuborish') {
-          if (ctx.session.movieData.auto_thumbnail_file_id) {
-            ctx.session.movieData.thumbnail_file_id = ctx.session.movieData.auto_thumbnail_file_id;
-          }
-          ctx.session.step = 6;
-          await ctx.reply('6️⃣ Bu kino premyera bo\'lsinmi?', AdminKeyboard.yesNo());
+      case 4:
+        if (text !== '⏭ O\'tkazib yuborish') {
+          ctx.session.movieData.description = text.trim();
         }
+        ctx.session.step = 5;
+        await ctx.reply(
+          `✅ Tavsif ${text === '⏭ O\'tkazib yuborish' ? '_o\'tkazib yuborildi_' : 'saqlandi'} (5/5)\n` +
+          '━━━━━━━━━━━━━━━━━━\n\n' +
+          '⭐ *Oxirgi qadam:* premyera holati.\n\n' +
+          '_Premyera kinolar foydalanuvchilarga "🎬 Premyera Kinolar" bo\'limida birinchi ko\'rinadi. Bu yangi yoki mashhur kinolar uchun foydali._\n\n' +
+          '👇 Tanlang:',
+          { parse_mode: 'Markdown', ...AdminKeyboard.yesNo() }
+        );
         break;
 
-      case 6: {
+      case 5: {
         if (text === '✅ Ha') {
           ctx.session.movieData.is_premiere = true;
           const premiereMovies = await svc.getPremiereMovies(botId);
           ctx.session.movieData.premiere_order = premiereMovies.length;
-        } else {
+        } else if (text === '❌ Yo\'q') {
           ctx.session.movieData.is_premiere = false;
+        } else {
+          await ctx.reply(
+            '⚠️ Iltimos, faqat *"✅ Ha"* yoki *"❌ Yo\'q"* tugmasini bosing.',
+            { parse_mode: 'Markdown', ...AdminKeyboard.yesNo() }
+          );
+          return;
         }
 
+        // Avto thumbnail — agar video bilan birga kelgan bo'lsa
+        if (!ctx.session.movieData.thumbnail_file_id && ctx.session.movieData.auto_thumbnail_file_id) {
+          ctx.session.movieData.thumbnail_file_id = ctx.session.movieData.auto_thumbnail_file_id;
+        }
+        delete (ctx.session.movieData as any).auto_thumbnail_file_id;
+
         ctx.session.movieData.uploaded_by = ctx.from.id;
-        const movie = await svc.createMovie(botId, ctx.session.movieData);
-
-        await ctx.reply(
-          '✅ Kino muvaffaqiyatli yuklandi!\n\n' +
-          `📝 Kod: ${movie.code}\n` +
-          `🎬 Nom: ${movie.title}\n` +
-          `⭐ Premyera: ${movie.is_premiere ? 'Ha' : 'Yo\'q'}`,
-          AdminKeyboard.mainMenu()
-        );
-
+        try {
+          const movie = await svc.createMovie(botId, ctx.session.movieData);
+          const dur = movie.duration
+            ? `${Math.floor(movie.duration / 60)}:${String(movie.duration % 60).padStart(2, '0')}`
+            : '—';
+          await ctx.reply(
+            '🎉 *Kino muvaffaqiyatli yuklandi!*\n' +
+            '━━━━━━━━━━━━━━━━━━\n\n' +
+            `🔢 Kod:        \`${movie.code}\`\n` +
+            `🎬 Nom:        ${movie.title}\n` +
+            `📁 Tur:        \`${movie.file_type}\`\n` +
+            `⏱ Davomiylik: \`${dur}\`\n` +
+            `⭐ Premyera:   ${movie.is_premiere ? '✅ Ha' : '❌ Yo\'q'}\n\n` +
+            `💡 _Endi foydalanuvchilar \`${movie.code}\` kodini yozib shu kinoni topa oladi._\n\n` +
+            'Yana kino qo\'shish uchun "📤 Kino Yuklash"',
+            { parse_mode: 'Markdown', ...AdminKeyboard.mainMenu() }
+          );
+        } catch (e) {
+          console.error('createMovie failed:', e);
+          await ctx.reply(
+            '❌ Kino saqlashda xatolik yuz berdi.\n\n' +
+            'Qaytadan urinib ko\'ring yoki admin bilan bog\'laning.',
+            AdminKeyboard.mainMenu()
+          );
+        }
         ctx.session = {} as any;
         break;
       }
@@ -293,7 +375,19 @@ export function registerBotHandlers(
     ctx.session.scene = 'upload_movie';
     ctx.session.step = 1;
     ctx.session.movieData = {};
-    await ctx.reply('📤 Kino Yuklash\n\n1️⃣ Kino kodini kiriting (masalan: KN001):', AdminKeyboard.cancel());
+    await ctx.reply(
+      '🎬 *Kino yuklash boshlandi* (1/5)\n' +
+      '━━━━━━━━━━━━━━━━━━\n\n' +
+      '📥 *Birinchi qadam:* kino faylini menga yuboring.\n\n' +
+      '✅ Qabul qilinadigan turlar:\n' +
+      '   • 🎥 Video\n' +
+      '   • 🎞 Animation (GIF)\n' +
+      '   • 🔵 Dumaloq video\n' +
+      '   • 📁 Document (.mp4, .mkv va h.k.)\n\n' +
+      '💡 _Maslahat: video-ni boshqa botdan yoki kanaldan ham forward qilishingiz mumkin._\n\n' +
+      'Tayyor bo\'lsangiz, faylni yuboring 👇',
+      { parse_mode: 'Markdown', ...AdminKeyboard.cancel() }
+    );
   });
 
   bot.hears('📋 Kinolar Ro\'yxati', async (ctx) => {
@@ -660,14 +754,27 @@ export function registerBotHandlers(
     fileSize?: number,
     thumbId?: string,
   ) {
-    if (ctx.session?.scene !== 'upload_movie' || ctx.session?.step !== 4) return false;
+    if (ctx.session?.scene !== 'upload_movie' || ctx.session?.step !== 1) return false;
     ctx.session.movieData.file_id = fileId;
     ctx.session.movieData.file_type = fileType;
     if (duration !== undefined) ctx.session.movieData.duration = duration;
     if (fileSize !== undefined) ctx.session.movieData.file_size = fileSize;
     if (thumbId) ctx.session.movieData.auto_thumbnail_file_id = thumbId;
-    ctx.session.step = 5;
-    await ctx.reply('5️⃣ Thumbnail rasm yuboring (ixtiyoriy):', AdminKeyboard.skipOrCancel());
+    ctx.session.step = 2;
+    const sizeMb = fileSize ? (fileSize / 1024 / 1024).toFixed(1) : '?';
+    const dur = duration ? `${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}` : '—';
+    await ctx.reply(
+      '✅ *Fayl qabul qilindi!* (2/5)\n' +
+      '━━━━━━━━━━━━━━━━━━\n\n' +
+      `📁 Tur: \`${fileType}\`\n` +
+      `⏱ Davomiyligi: \`${dur}\`\n` +
+      `💾 Hajmi: \`${sizeMb} MB\`\n\n` +
+      '🔢 *Ikkinchi qadam:* kino uchun *unikal kod* kiriting.\n\n' +
+      '_Kod foydalanuvchilarga shu kinoni topishga yordam beradi. Bot orqali "Kod orqali ko\'rish" → kodni kiritish — kino chiqadi._\n\n' +
+      'Misollar: `KN001`, `FILM2024`, `BARBIE`\n\n' +
+      'Endi kodni yozing 👇',
+      { parse_mode: 'Markdown', ...AdminKeyboard.cancel() }
+    );
     return true;
   }
 
@@ -677,7 +784,7 @@ export function registerBotHandlers(
     const v = (ctx.message as Message.VideoMessage).video;
     const handled = await captureUploadMedia(ctx, v.file_id, 'video', v.duration, v.file_size, v.thumbnail?.file_id);
     if (!handled && ctx.session?.scene === 'upload_movie') {
-      await ctx.reply('⚠️ Avval boshqa qadamlarni to\'ldiring. Qayta boshlash uchun "❌ Bekor qilish" → "📤 Kino Yuklash".');
+      await ctx.reply('⚠️ Hozir matn kutilmoqda. Qayta boshlash uchun "❌ Bekor qilish" → "📤 Kino Yuklash".');
     }
   });
 
@@ -703,27 +810,13 @@ export function registerBotHandlers(
     if (!user || !(await isAdmin(user.id))) return;
     const doc = (ctx.message as any).document;
     if (!doc) return;
-    if (ctx.session?.scene === 'upload_movie' && ctx.session?.step === 4) {
+    if (ctx.session?.scene === 'upload_movie' && ctx.session?.step === 1) {
       const isVideo = (doc.mime_type || '').startsWith('video/');
       if (isVideo) {
         await captureUploadMedia(ctx, doc.file_id, 'document', undefined, doc.file_size, doc.thumbnail?.file_id);
       } else {
         await ctx.reply('⚠️ Video fayl yuboring (video yoki .mp4 hujjat).');
       }
-    }
-  });
-
-  // ============ PHOTO (thumbnail) ============
-  bot.on('photo', async (ctx) => {
-    const user = ctx.from;
-    if (!user || !(await isAdmin(user.id))) return;
-    if (ctx.session?.scene === 'upload_movie' && ctx.session?.step === 5) {
-      const message = ctx.message as Message.PhotoMessage;
-      const photo = message.photo;
-      const largestPhoto = photo[photo.length - 1];
-      ctx.session.movieData.thumbnail_file_id = largestPhoto.file_id;
-      ctx.session.step = 6;
-      await ctx.reply('6️⃣ Bu kino premyera bo\'lsinmi?', AdminKeyboard.yesNo());
     }
   });
 }
