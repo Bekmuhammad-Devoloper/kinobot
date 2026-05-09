@@ -91,8 +91,8 @@ export class BotManagerService implements OnModuleInit, OnModuleDestroy {
       contactUsername: 'Bobrr1234',
     }, this.telegramService);
 
-    tg.catch((err, ctx) => {
-      this.logger.error(`Bot ${bot.id} error: ${err}`);
+    tg.catch((err) => {
+      this.logger.error(`Bot ${bot.id} runtime error: ${err}`);
     });
 
     // Try to fetch bot info & set username
@@ -105,13 +105,40 @@ export class BotManagerService implements OnModuleInit, OnModuleDestroy {
       this.logger.error(`Bot ${bot.id} getMe failed: ${e?.message || e}`);
     }
 
-    // Launch in background (long polling)
-    tg.launch().catch((e) => {
-      this.logger.error(`Bot ${bot.id} launch failed: ${e?.message || e}`);
-    });
+    // Eski polling/webhook session'ini majburan tozalash (409 Conflict'ni hal qiladi)
+    try {
+      await tg.telegram.deleteWebhook({ drop_pending_updates: true });
+    } catch (e) {
+      this.logger.warn(`Bot ${bot.id} deleteWebhook warning: ${e?.message || e}`);
+    }
+
+    // Launch with retry on 409 Conflict
+    this.launchWithRetry(tg, bot.id);
 
     this.bots.set(bot.id, tg);
     this.logger.log(`✅ Bot ${bot.id} (${bot.name}) started`);
+  }
+
+  private launchWithRetry(tg: Telegraf<BotContext>, botId: number, attempt = 1) {
+    tg.launch({ dropPendingUpdates: true }).catch(async (e) => {
+      const msg = e?.message || String(e);
+      this.logger.error(`Bot ${botId} launch failed (attempt ${attempt}): ${msg}`);
+
+      // 409 Conflict — boshqa instance polling qilmoqda. Eski session'ni o'ldiramiz va qayta urinamiz.
+      if (msg.includes('409') && attempt < 5) {
+        try {
+          await tg.telegram.deleteWebhook({ drop_pending_updates: true });
+          // Telegram'dan eski polling session'ini chiqarish uchun bitta getUpdates so'rovi
+          await tg.telegram.callApi('getUpdates' as any, { offset: -1, timeout: 0, limit: 1 } as any).catch(() => {});
+        } catch {}
+        const delayMs = Math.min(2000 * attempt, 10_000);
+        this.logger.log(`Bot ${botId} retrying launch in ${delayMs}ms...`);
+        setTimeout(() => this.launchWithRetry(tg, botId, attempt + 1), delayMs);
+      } else if (attempt >= 5) {
+        this.logger.error(`Bot ${botId} gave up after ${attempt} attempts. Boshqa joyda ishlayotgan instance'ni to'xtating.`);
+        this.bots.delete(botId);
+      }
+    });
   }
 
   async stopBot(botId: number) {
