@@ -18,6 +18,12 @@ export function registerBotHandlers(
   const { botId, webAppUrl, adminWebAppUrl } = cfg;
   const contact = cfg.contactUsername || 'admin';
 
+  // Telegram WebApp tugmalari faqat HTTPS URL bilan ishlaydi.
+  // Lokal HTTP holatda WebApp tugmalari bermaymiz (oddiy keyboard ishlatamiz).
+  const isHttps = (u: string) => typeof u === 'string' && u.startsWith('https://');
+  const premiereWebApp = isHttps(webAppUrl) ? `${webAppUrl}/premiere?bot=${botId}` : undefined;
+  const adminWebApp = isHttps(adminWebAppUrl) ? `${adminWebAppUrl}?bot=${botId}` : undefined;
+
   const isAdmin = (telegramId: number) => svc.isAdmin(botId, telegramId);
 
   async function showMainMenu(ctx: BotContext) {
@@ -28,7 +34,7 @@ export function registerBotHandlers(
       '🎬 Asosiy Menyu\n\n' +
       'Quyidagi tugmalardan birini tanlang:' +
       (admin ? '\n\n👑 Siz adminsiz! /admin buyrug\'i orqali admin panelga o\'ting.' : ''),
-      UserKeyboard.mainMenu(`${webAppUrl}/premiere?bot=${botId}`)
+      UserKeyboard.mainMenu(premiereWebApp)
     );
   }
 
@@ -188,15 +194,21 @@ export function registerBotHandlers(
       await ctx.reply('😔 Hozircha premyera kinolar yo\'q.');
       return;
     }
-    await ctx.reply(
-      '🎬 <b>Premyera Kinolar</b>\n\n' +
-      `📊 Jami: ${movies.length} ta kino\n\n` +
-      'Quyidagi tugmani bosib premyera kinolarni ko\'ring:',
-      {
-        parse_mode: 'HTML',
-        ...UserKeyboard.premiereWebApp(`${webAppUrl}/premiere?bot=${botId}`)
-      }
-    );
+    if (premiereWebApp) {
+      await ctx.reply(
+        '🎬 <b>Premyera Kinolar</b>\n\n' +
+        `📊 Jami: ${movies.length} ta kino\n\n` +
+        'Quyidagi tugmani bosib premyera kinolarni ko\'ring:',
+        { parse_mode: 'HTML', ...UserKeyboard.premiereWebApp(premiereWebApp) }
+      );
+    } else {
+      let listMsg = '🎬 <b>Premyera Kinolar</b>\n\n';
+      movies.forEach((m, i) => {
+        listMsg += `${i + 1}. <b>${m.title}</b> (kod: ${m.code})\n`;
+      });
+      listMsg += '\n👉 Kodi orqali izlash uchun "🔍 Kod orqali ko\'rish" tugmasini bosing.';
+      await ctx.reply(listMsg, { parse_mode: 'HTML' });
+    }
   });
 
   // ============ SEARCH BY CODE ============
@@ -284,19 +296,27 @@ export function registerBotHandlers(
   bot.hears('📢 Kanallar Boshqaruvi', async (ctx) => {
     const user = ctx.from;
     if (!user || !(await isAdmin(user.id))) return;
-    await ctx.reply(
-      '📢 Kanallar Boshqaruvi\n\nWeb App orqali kanallarni boshqaring:',
-      AdminKeyboard.channelsWebApp(`${adminWebAppUrl}?bot=${botId}`)
-    );
+    if (adminWebApp) {
+      await ctx.reply(
+        '📢 Kanallar Boshqaruvi\n\nWeb App orqali kanallarni boshqaring:',
+        AdminKeyboard.channelsWebApp(adminWebApp)
+      );
+    } else {
+      await ctx.reply('📢 Kanallar Boshqaruvi\n\n⚠️ Web App URL HTTPS emas — kanallarni boshqarish uchun production deployment kerak.');
+    }
   });
 
   bot.hears('👥 Userlar Statistikasi', async (ctx) => {
     const user = ctx.from;
     if (!user || !(await isAdmin(user.id))) return;
-    await ctx.reply(
-      '👥 Userlar Statistikasi\n\nWeb App orqali userlarni ko\'ring:',
-      AdminKeyboard.usersWebApp(`${adminWebAppUrl}?bot=${botId}`)
-    );
+    if (adminWebApp) {
+      await ctx.reply(
+        '👥 Userlar Statistikasi\n\nWeb App orqali userlarni ko\'ring:',
+        AdminKeyboard.usersWebApp(adminWebApp)
+      );
+    } else {
+      await ctx.reply('👥 Userlar Statistikasi\n\n⚠️ Web App URL HTTPS emas — userlarni ko\'rish uchun production deployment kerak.');
+    }
   });
 
   bot.hears('📊 Umumiy Statistika', async (ctx) => {
