@@ -4,21 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#0b1220">
-    <title>👑 Super Admin — KinoBot</title>
+    <title>Super Admin — KinoBot</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0b1220;
-            --bg-2: #0f1828;
-            --bg-3: #131e34;
-            --surface: rgba(255,255,255,0.04);
-            --surface-2: rgba(255,255,255,0.07);
+            --bg: #07101f;
+            --bg-2: #0d1a30;
+            --bg-3: #122340;
+            --surface: rgba(255,255,255,0.03);
+            --surface-2: rgba(255,255,255,0.06);
             --surface-3: rgba(255,255,255,0.10);
-            --border: rgba(255,255,255,0.07);
-            --border-strong: rgba(255,255,255,0.14);
-            --text: #eef2ff;
-            --text-2: #a8b2d1;
-            --text-3: #6b7895;
+            --border: rgba(255,255,255,0.06);
+            --border-strong: rgba(255,255,255,0.12);
+            --text: #f1f5f9;
+            --text-2: #94a3b8;
+            --text-3: #64748b;
             --primary: #6366f1;
             --primary-2: #8b5cf6;
             --accent: #06b6d4;
@@ -26,27 +29,25 @@
             --warning: #f59e0b;
             --danger: #ef4444;
             --pink: #ec4899;
-            --orange: #fb923c;
             --grad-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
             --grad-blue: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
             --grad-red: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%);
             --grad-green: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
             --grad-orange: linear-gradient(135deg, #f59e0b 0%, #fb923c 100%);
             --grad-violet: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-            --shadow-sm: 0 1px 2px rgba(0,0,0,0.25);
-            --shadow: 0 8px 24px rgba(2,6,23,0.4);
-            --shadow-lg: 0 24px 60px rgba(2,6,23,0.55);
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+            --shadow: 0 8px 30px rgba(2,6,23,0.5);
+            --shadow-lg: 0 24px 70px rgba(2,6,23,0.6);
             --radius: 14px;
             --radius-lg: 20px;
             --radius-xl: 24px;
             --radius-sm: 10px;
-            --sidebar-w: 260px;
-            --header-h: 64px;
+            --sidebar-w: 256px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background:
                 radial-gradient(1200px 700px at 100% -10%, rgba(99,102,241,0.18), transparent 60%),
                 radial-gradient(900px 500px at -10% 110%, rgba(236,72,153,0.10), transparent 55%),
@@ -60,6 +61,10 @@
         }
         a { color: inherit; text-decoration: none; }
         button { font-family: inherit; }
+        code, .mono { font-family: 'JetBrains Mono', ui-monospace, "SF Mono", Menlo, monospace; }
+
+        /* SVG icons */
+        .ic { width: 1em; height: 1em; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
         /* ============== APP LAYOUT ============== */
         .app {
@@ -67,75 +72,80 @@
             grid-template-columns: var(--sidebar-w) 1fr;
             min-height: 100vh;
         }
-        @media (max-width: 1024px) {
-            .app { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 1024px) { .app { grid-template-columns: 1fr; } }
 
-        /* ============== SIDEBAR (desktop) ============== */
+        /* ============== SIDEBAR ============== */
         .sidebar {
             position: sticky;
             top: 0;
             height: 100vh;
-            background: rgba(11,18,32,0.7);
-            backdrop-filter: saturate(180%) blur(24px);
-            -webkit-backdrop-filter: saturate(180%) blur(24px);
+            background: rgba(7,16,31,0.7);
+            backdrop-filter: saturate(180%) blur(28px);
+            -webkit-backdrop-filter: saturate(180%) blur(28px);
             border-right: 1px solid var(--border);
-            padding: 22px 16px;
+            padding: 22px 14px;
             display: flex; flex-direction: column;
             overflow-y: auto;
         }
         @media (max-width: 1024px) { .sidebar { display: none; } }
 
         .brand {
-            display: flex; align-items: center; gap: 10px;
-            padding: 0 8px 16px;
-            margin-bottom: 14px;
+            display: flex; align-items: center; gap: 11px;
+            padding: 0 8px 18px;
+            margin-bottom: 16px;
             border-bottom: 1px solid var(--border);
         }
         .brand-mark {
             width: 38px; height: 38px;
-            border-radius: 12px;
+            border-radius: 11px;
             background: var(--grad-primary);
             display: flex; align-items: center; justify-content: center;
-            font-size: 19px;
-            box-shadow: 0 6px 18px rgba(99,102,241,0.45);
+            color: white;
+            box-shadow: 0 6px 20px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.2);
+            font-size: 20px;
         }
         .brand-text { line-height: 1.2; }
-        .brand-title { font-size: 15px; font-weight: 700; }
-        .brand-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+        .brand-title { font-size: 14.5px; font-weight: 700; letter-spacing: -0.01em; }
+        .brand-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; font-weight: 500; }
 
-        .nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+        .nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+        .nav-section-label {
+            padding: 14px 12px 6px;
+            font-size: 10.5px; font-weight: 700;
+            color: var(--text-3);
+            text-transform: uppercase; letter-spacing: 0.08em;
+        }
         .nav-item {
             display: flex; align-items: center; gap: 11px;
-            padding: 10px 12px;
-            border-radius: 11px;
+            padding: 9px 12px;
+            border-radius: 10px;
             font-size: 13.5px; font-weight: 600;
             color: var(--text-2);
             cursor: pointer;
             transition: background .15s, color .15s, transform .12s;
             border: 1px solid transparent;
+            position: relative;
         }
         .nav-item:hover { background: var(--surface); color: var(--text); }
         .nav-item.active {
-            background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(139,92,246,0.12));
+            background: linear-gradient(135deg, rgba(99,102,241,0.20), rgba(139,92,246,0.14));
             color: white;
             border-color: rgba(99,102,241,0.35);
+            box-shadow: 0 4px 14px rgba(99,102,241,0.18);
         }
-        .nav-item .icon {
-            width: 22px; height: 22px; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 15px;
-        }
-        .nav-item .badge {
+        .nav-item .ic { font-size: 17px; }
+        .nav-item .badge-pill {
             margin-left: auto;
             background: var(--surface-2);
-            padding: 2px 7px;
-            border-radius: 8px;
+            padding: 1px 8px;
+            border-radius: 999px;
             font-size: 11px; font-weight: 700;
             color: var(--text-2);
+            min-width: 22px;
+            text-align: center;
         }
-        .nav-item.active .badge { background: rgba(255,255,255,0.18); color: white; }
-        .nav-item.warn .badge { background: rgba(245,158,11,0.18); color: #fbbf24; }
+        .nav-item.active .badge-pill { background: rgba(255,255,255,0.18); color: white; }
+        .nav-item.warn .badge-pill { background: rgba(245,158,11,0.18); color: #fbbf24; }
 
         .sidebar-footer {
             padding-top: 14px;
@@ -145,68 +155,72 @@
         .logout-btn {
             width: 100%;
             display: flex; align-items: center; justify-content: center; gap: 8px;
-            background: rgba(239,68,68,0.08);
-            border: 1px solid rgba(239,68,68,0.3);
+            background: rgba(239,68,68,0.06);
+            border: 1px solid rgba(239,68,68,0.25);
             color: #fca5a5;
             padding: 10px 14px; border-radius: 11px;
             font-size: 13px; font-weight: 600;
             cursor: pointer;
-            transition: background .15s;
+            transition: background .15s, border-color .15s;
         }
-        .logout-btn:hover { background: rgba(239,68,68,0.18); }
+        .logout-btn:hover { background: rgba(239,68,68,0.16); border-color: rgba(239,68,68,0.4); }
+        .logout-btn .ic { font-size: 15px; }
 
         /* ============== MAIN ============== */
-        .main { min-width: 0; padding: 20px 28px 60px; max-width: 1400px; }
-        @media (max-width: 1024px) { .main { padding: 14px; padding-top: 70px; } }
+        .main { min-width: 0; padding: 22px 30px 60px; max-width: 1500px; }
+        @media (max-width: 1024px) { .main { padding: 14px; padding-top: 70px; padding-bottom: 100px; } }
         @media (max-width: 640px) { .main { padding: 12px; padding-top: 70px; padding-bottom: 100px; } }
 
-        /* ============== TOP BAR (mobile only) ============== */
+        /* ============== TOPBAR (mobile) ============== */
         .topbar {
             position: fixed; top: 0; left: 0; right: 0; z-index: 100;
             display: none;
             align-items: center; justify-content: space-between;
-            padding: 10px 14px;
-            background: rgba(11,18,32,0.85);
+            padding: 11px 14px;
+            background: rgba(7,16,31,0.85);
             backdrop-filter: saturate(180%) blur(24px);
             -webkit-backdrop-filter: saturate(180%) blur(24px);
             border-bottom: 1px solid var(--border);
             height: 56px;
         }
         @media (max-width: 1024px) { .topbar { display: flex; } }
-        .topbar .brand-mark { width: 32px; height: 32px; font-size: 16px; border-radius: 10px; }
-        .topbar .brand-title { font-size: 14px; }
         .topbar .brand { padding: 0; margin: 0; border: 0; }
+        .topbar .brand-mark { width: 32px; height: 32px; font-size: 16px; border-radius: 9px; }
+        .topbar .brand-title { font-size: 14px; }
+        .topbar .brand-sub { display: none; }
         .topbar-logout {
-            background: rgba(239,68,68,0.1);
-            border: 1px solid rgba(239,68,68,0.3);
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.28);
             color: #fca5a5;
             padding: 7px 12px; border-radius: 10px;
-            font-size: 12px; font-weight: 600;
+            font-size: 12.5px; font-weight: 600;
             cursor: pointer;
         }
 
-        /* ============== BOTTOM NAV (mobile only) ============== */
+        /* ============== BOTTOM NAV (mobile) ============== */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
             display: none;
-            background: rgba(11,18,32,0.92);
-            backdrop-filter: saturate(180%) blur(24px);
-            -webkit-backdrop-filter: saturate(180%) blur(24px);
+            background: rgba(7,16,31,0.92);
+            backdrop-filter: saturate(180%) blur(28px);
+            -webkit-backdrop-filter: saturate(180%) blur(28px);
             border-top: 1px solid var(--border);
-            padding: 6px 6px 8px;
-            padding-bottom: calc(8px + env(safe-area-inset-bottom));
+            padding: 7px 6px;
+            padding-bottom: calc(7px + env(safe-area-inset-bottom));
             z-index: 100;
         }
         @media (max-width: 1024px) { .bottom-nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; } }
         .bnav-item {
             display: flex; flex-direction: column; align-items: center; gap: 3px;
-            padding: 7px 4px; border-radius: 10px;
+            padding: 8px 4px;
+            border-radius: 11px;
             color: var(--text-3);
             font-size: 10.5px; font-weight: 600;
             cursor: pointer;
             transition: color .15s, background .15s;
         }
-        .bnav-item .icon { font-size: 18px; line-height: 1; }
+        .bnav-item .ic { font-size: 19px; line-height: 1; }
         .bnav-item.active {
             color: white;
             background: linear-gradient(135deg, rgba(99,102,241,0.22), rgba(139,92,246,0.16));
@@ -219,33 +233,47 @@
             flex-wrap: wrap;
         }
         .page-title {
-            font-size: 26px; font-weight: 800; letter-spacing: -0.02em;
+            font-size: 28px; font-weight: 800; letter-spacing: -0.025em;
             background: linear-gradient(90deg, #fff, #c7d2fe);
             -webkit-background-clip: text; background-clip: text;
             -webkit-text-fill-color: transparent;
+            line-height: 1.1;
+            display: flex; align-items: center; gap: 12px;
         }
-        @media (max-width: 640px) { .page-title { font-size: 22px; } }
-        .page-sub { font-size: 13px; color: var(--text-3); margin-top: 4px; }
+        @media (max-width: 640px) { .page-title { font-size: 22px; gap: 9px; } }
+        .page-title .title-icon {
+            width: 40px; height: 40px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.10));
+            border: 1px solid rgba(99,102,241,0.3);
+            border-radius: 12px;
+            color: var(--primary);
+            -webkit-text-fill-color: var(--primary);
+            font-size: 20px;
+        }
+        @media (max-width: 640px) { .page-title .title-icon { width: 34px; height: 34px; font-size: 17px; border-radius: 10px; } }
+        .page-sub { font-size: 13px; color: var(--text-3); margin-top: 6px; font-weight: 500; }
 
         /* ============== SEARCH ============== */
         .search-wrap {
             position: relative;
             min-width: 240px;
-            flex: 1; max-width: 380px;
+            flex: 1; max-width: 420px;
         }
         @media (max-width: 640px) { .search-wrap { width: 100%; max-width: none; } }
         .search-icon {
             position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
-            color: var(--text-3); font-size: 14px;
+            color: var(--text-3); font-size: 16px;
             pointer-events: none;
         }
         .search-input {
             width: 100%;
-            padding: 11px 14px 11px 38px;
+            padding: 11px 14px 11px 40px;
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 12px;
             color: var(--text); font-size: 13.5px;
+            font-family: inherit;
             transition: border-color .15s, box-shadow .15s;
         }
         .search-input:focus {
@@ -260,18 +288,18 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 14px;
-            margin-bottom: 24px;
+            margin-bottom: 26px;
         }
         .stat-card {
             position: relative;
-            padding: 18px;
+            padding: 18px 20px;
             background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
             border: 1px solid var(--border);
             border-radius: var(--radius);
             overflow: hidden;
-            transition: transform .2s, border-color .2s;
+            transition: transform .25s cubic-bezier(.21,1.02,.73,1), border-color .2s;
         }
-        .stat-card:hover { transform: translateY(-2px); border-color: var(--border-strong); }
+        .stat-card:hover { transform: translateY(-3px); border-color: var(--border-strong); }
         .stat-card::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
             background: var(--grad-primary);
@@ -281,22 +309,23 @@
         .stat-card.red::before { background: var(--grad-red); }
         .stat-card.orange::before { background: var(--grad-orange); }
         .stat-card.violet::before { background: var(--grad-violet); }
-        .stat-icon {
-            width: 38px; height: 38px;
+        .stat-icon-wrap {
+            width: 40px; height: 40px;
             display: inline-flex; align-items: center; justify-content: center;
-            background: var(--surface-2);
+            background: rgba(99,102,241,0.14);
+            color: var(--primary);
             border-radius: 11px;
-            margin-bottom: 12px;
-            font-size: 18px;
+            margin-bottom: 14px;
+            font-size: 19px;
         }
-        .stat-card.blue .stat-icon { background: rgba(59,130,246,0.15); }
-        .stat-card.green .stat-icon { background: rgba(16,185,129,0.15); }
-        .stat-card.red .stat-icon { background: rgba(239,68,68,0.15); }
-        .stat-card.orange .stat-icon { background: rgba(245,158,11,0.15); }
-        .stat-card.violet .stat-icon { background: rgba(139,92,246,0.15); }
+        .stat-card.blue .stat-icon-wrap { background: rgba(59,130,246,0.14); color: #60a5fa; }
+        .stat-card.green .stat-icon-wrap { background: rgba(16,185,129,0.14); color: #34d399; }
+        .stat-card.red .stat-icon-wrap { background: rgba(239,68,68,0.14); color: #f87171; }
+        .stat-card.orange .stat-icon-wrap { background: rgba(245,158,11,0.14); color: #fbbf24; }
+        .stat-card.violet .stat-icon-wrap { background: rgba(139,92,246,0.14); color: #a78bfa; }
         .stat-value {
-            font-size: 28px; font-weight: 800; letter-spacing: -0.025em;
-            line-height: 1;
+            font-size: 30px; font-weight: 800; letter-spacing: -0.03em;
+            line-height: 1; font-feature-settings: 'tnum';
         }
         .stat-label {
             margin-top: 6px;
@@ -306,30 +335,40 @@
         }
         .stat-trend {
             display: inline-flex; align-items: center; gap: 4px;
-            margin-top: 8px;
+            margin-top: 10px;
             font-size: 11.5px; font-weight: 700;
         }
         .stat-trend.up { color: #34d399; }
         .stat-trend.down { color: #fca5a5; }
 
         /* ============== SECTION ============== */
-        .section { margin-bottom: 26px; }
+        .section { margin-bottom: 28px; }
         .section-head {
             display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 14px;
+            margin-bottom: 16px;
             gap: 10px; flex-wrap: wrap;
         }
         .section-title {
-            font-size: 16px; font-weight: 700;
-            display: flex; align-items: center; gap: 9px;
+            font-size: 16px; font-weight: 700; letter-spacing: -0.01em;
+            display: flex; align-items: center; gap: 10px;
         }
-        .section-title .icon-box {
-            width: 28px; height: 28px;
+        .section-title .ic-box {
+            width: 30px; height: 30px;
             display: inline-flex; align-items: center; justify-content: center;
             background: var(--surface-2);
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 9px;
+            color: var(--primary);
+            font-size: 15px;
         }
+        .section-link {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 12.5px; color: var(--primary);
+            cursor: pointer; font-weight: 600;
+            padding: 6px 10px; border-radius: 8px;
+            transition: background .15s;
+        }
+        .section-link:hover { background: var(--surface-2); }
+        .section-link .ic { font-size: 13px; }
 
         /* ============== CARD ============== */
         .card {
@@ -339,9 +378,8 @@
             padding: 18px;
         }
         @media (max-width: 640px) { .card { padding: 14px; } }
-        .card.compact { padding: 14px; }
 
-        /* ============== SYSTEM STATS ============== */
+        /* ============== SYSTEM ============== */
         .system-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -360,34 +398,38 @@
         .progress-label {
             font-size: 12.5px; font-weight: 600;
             color: var(--text-2);
-            display: flex; align-items: center; gap: 6px;
+            display: inline-flex; align-items: center; gap: 7px;
         }
-        .progress-value { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
-        .progress-detail { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+        .progress-label .ic { font-size: 14px; color: var(--primary); }
+        .progress-value {
+            font-size: 17px; font-weight: 800; letter-spacing: -0.02em;
+            font-feature-settings: 'tnum';
+        }
+        .progress-detail { font-size: 11px; color: var(--text-3); margin-top: 5px; font-feature-settings: 'tnum'; }
         .progress-bar {
             height: 6px;
             background: var(--surface-2);
             border-radius: 3px;
             overflow: hidden;
-            position: relative;
         }
         .progress-fill {
             height: 100%;
             background: var(--grad-blue);
-            transition: width .5s cubic-bezier(.4,0,.2,1);
+            transition: width .6s cubic-bezier(.4,0,.2,1);
             border-radius: 3px;
         }
         .progress-fill.warn { background: var(--grad-orange); }
         .progress-fill.crit { background: var(--grad-red); }
 
-        /* ============== BOT GRID ============== */
+        /* ============== FILTERS ============== */
         .filter-bar {
             display: flex; gap: 16px; flex-wrap: wrap;
-            margin-bottom: 16px;
+            margin-bottom: 18px;
             align-items: center;
         }
         .filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
         .pill {
+            display: inline-flex; align-items: center; gap: 6px;
             padding: 7px 13px; font-size: 12.5px;
             background: var(--surface);
             border: 1px solid var(--border);
@@ -397,24 +439,32 @@
             transition: all .15s;
             white-space: nowrap;
         }
-        .pill:hover { background: var(--surface-2); }
+        .pill:hover { background: var(--surface-2); color: var(--text); }
         .pill.active {
             background: var(--grad-primary);
             color: white;
             border-color: transparent;
-            box-shadow: 0 4px 12px rgba(99,102,241,0.35);
+            box-shadow: 0 4px 14px rgba(99,102,241,0.4);
         }
-        .pill.active .count { color: white; }
-        .pill .count { color: var(--text-3); margin-left: 4px; font-weight: 700; }
+        .pill .ic { font-size: 13px; }
+        .pill .count {
+            background: var(--surface-2);
+            color: var(--text-3);
+            padding: 1px 7px;
+            border-radius: 999px;
+            font-size: 10.5px; font-weight: 700;
+            margin-left: 2px;
+            font-feature-settings: 'tnum';
+        }
+        .pill.active .count { background: rgba(255,255,255,0.22); color: white; }
 
+        /* ============== BOT GRID ============== */
         .bots-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
             gap: 14px;
         }
-        @media (max-width: 640px) {
-            .bots-grid { grid-template-columns: 1fr; gap: 12px; }
-        }
+        @media (max-width: 640px) { .bots-grid { grid-template-columns: 1fr; gap: 12px; } }
 
         .bot-card {
             position: relative;
@@ -423,7 +473,7 @@
             border-radius: var(--radius);
             padding: 16px;
             cursor: pointer;
-            transition: transform .2s, border-color .2s, box-shadow .2s;
+            transition: transform .25s cubic-bezier(.21,1.02,.73,1), border-color .2s, box-shadow .2s;
             overflow: hidden;
         }
         .bot-card::before {
@@ -433,16 +483,16 @@
         }
         .bot-card.status-paused::before { background: var(--grad-orange); }
         .bot-card.status-expired::before { background: var(--grad-red); opacity: 1; }
-        .bot-card.status-offline::before { background: linear-gradient(90deg, #475569, #6b7895); opacity: 0.6; }
+        .bot-card.status-offline::before { background: linear-gradient(90deg, #475569, #64748b); opacity: 0.6; }
         .bot-card:hover {
-            transform: translateY(-3px);
+            transform: translateY(-4px);
             border-color: var(--border-strong);
             box-shadow: var(--shadow);
         }
         .bot-card:hover::before { opacity: 1; }
 
         .bot-head {
-            display: flex; align-items: flex-start; gap: 12px;
+            display: flex; align-items: flex-start; gap: 13px;
             margin-bottom: 12px;
         }
         .bot-avatar {
@@ -453,12 +503,24 @@
             font-weight: 700; font-size: 20px; color: white;
             flex-shrink: 0;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+            box-shadow: 0 6px 16px rgba(99,102,241,0.32);
+            position: relative;
         }
         .bot-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .bot-avatar .status-dot {
+            position: absolute; bottom: -2px; right: -2px;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            border: 2px solid var(--bg-3);
+        }
+        .bot-avatar .status-dot.dot-active { background: #10b981; }
+        .bot-avatar .status-dot.dot-paused { background: #f59e0b; }
+        .bot-avatar .status-dot.dot-expired { background: #ef4444; }
+        .bot-avatar .status-dot.dot-offline { background: #64748b; }
+
         .bot-info { flex: 1; min-width: 0; }
         .bot-name {
-            font-size: 16px; font-weight: 700;
+            font-size: 16px; font-weight: 700; letter-spacing: -0.01em;
             line-height: 1.2;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
@@ -471,10 +533,20 @@
         .bot-username.muted { color: var(--text-3); }
 
         .bot-owner {
-            font-size: 12px;
+            font-size: 12.5px;
+            color: var(--text-2);
+            margin-top: 10px;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .bot-owner .ic { color: var(--text-3); font-size: 14px; }
+        .bot-owner .id-pill {
+            margin-left: auto;
+            padding: 2px 8px;
+            background: var(--surface-2);
+            border-radius: 999px;
+            font-size: 11px; font-weight: 600;
             color: var(--text-3);
-            margin-top: 8px;
-            display: flex; align-items: center; gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .bot-stats {
@@ -482,27 +554,34 @@
             gap: 8px;
             margin-top: 14px;
             padding: 12px;
-            background: var(--surface);
+            background: rgba(255,255,255,0.025);
+            border: 1px solid var(--border);
             border-radius: 11px;
         }
-        @media (max-width: 380px) {
-            .bot-stats { grid-template-columns: repeat(2, 1fr); }
-        }
+        @media (max-width: 380px) { .bot-stats { grid-template-columns: repeat(2, 1fr); } }
         .bot-stat {
             text-align: center;
             padding: 0 4px;
+            position: relative;
         }
+        .bot-stat:not(:last-child)::after {
+            content: ''; position: absolute; right: 0; top: 6px; bottom: 6px;
+            width: 1px; background: var(--border);
+        }
+        @media (max-width: 380px) { .bot-stat::after { display: none !important; } }
         .bot-stat .num {
-            font-size: 16px; font-weight: 800; letter-spacing: -0.01em;
-            line-height: 1;
+            font-size: 17px; font-weight: 800; letter-spacing: -0.02em;
+            line-height: 1; font-feature-settings: 'tnum';
         }
         .bot-stat .lbl {
             font-size: 10px;
             color: var(--text-3);
-            margin-top: 4px;
+            margin-top: 5px;
             text-transform: uppercase; letter-spacing: 0.04em;
             font-weight: 600;
+            display: flex; align-items: center; justify-content: center; gap: 3px;
         }
+        .bot-stat .ic { font-size: 11px; opacity: 0.7; }
 
         .bot-bottom {
             margin-top: 14px;
@@ -514,12 +593,14 @@
         /* ============== BADGES ============== */
         .badge {
             display: inline-flex; align-items: center; gap: 4px;
-            padding: 3px 9px;
+            padding: 3px 10px;
             border-radius: 999px;
             font-size: 10.5px; font-weight: 700;
             letter-spacing: 0.04em; text-transform: uppercase;
             white-space: nowrap;
+            font-feature-settings: 'tnum';
         }
+        .badge .ic { font-size: 11px; }
         .badge-active { background: rgba(16,185,129,0.18); color: #34d399; }
         .badge-paused { background: rgba(245,158,11,0.18); color: #fbbf24; }
         .badge-expired { background: rgba(239,68,68,0.18); color: #fca5a5; }
@@ -541,24 +622,30 @@
         }
         .btn:active { transform: scale(0.97); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn .ic { font-size: 14px; }
         .btn-primary {
             background: var(--grad-primary); color: white;
             box-shadow: 0 6px 16px rgba(99,102,241,0.32);
         }
-        .btn-primary:hover { filter: brightness(1.08); box-shadow: 0 10px 22px rgba(99,102,241,0.45); }
+        .btn-primary:hover { filter: brightness(1.08); box-shadow: 0 10px 24px rgba(99,102,241,0.45); }
         .btn-success {
             background: var(--grad-green); color: white;
             box-shadow: 0 6px 16px rgba(16,185,129,0.32);
         }
-        .btn-warn { background: rgba(245,158,11,0.16); color: #fcd34d; border: 1px solid rgba(245,158,11,0.4); }
-        .btn-warn:hover { background: rgba(245,158,11,0.26); }
-        .btn-danger { background: rgba(239,68,68,0.14); color: #fca5a5; border: 1px solid rgba(239,68,68,0.34); }
-        .btn-danger:hover { background: rgba(239,68,68,0.24); }
+        .btn-warn { background: rgba(245,158,11,0.14); color: #fcd34d; border: 1px solid rgba(245,158,11,0.36); }
+        .btn-warn:hover { background: rgba(245,158,11,0.24); }
+        .btn-danger { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.32); }
+        .btn-danger:hover { background: rgba(239,68,68,0.22); }
         .btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
         .btn-secondary:hover { background: var(--surface-3); border-color: var(--border-strong); }
         .btn-ghost { background: transparent; color: var(--text-2); }
         .btn-ghost:hover { background: var(--surface); color: var(--text); }
         .btn-sm { padding: 6px 11px; font-size: 11.5px; }
+        .btn-icon-sm {
+            width: 32px; height: 32px; padding: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .btn-icon-sm .ic { font-size: 14px; }
         .btn-lg { padding: 13px 18px; font-size: 14.5px; }
         .btn-block { width: 100%; }
 
@@ -609,7 +696,7 @@
         .modal-overlay {
             position: fixed; inset: 0;
             background: rgba(2,6,23,0.78);
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
             display: none;
             align-items: center; justify-content: center;
             z-index: 1000;
@@ -640,14 +727,17 @@
             display: flex; align-items: center; justify-content: space-between;
             padding: 18px 22px;
             border-bottom: 1px solid var(--border);
-            background: rgba(15,24,40,0.6);
+            background: rgba(7,16,31,0.6);
             backdrop-filter: blur(10px);
-            position: relative;
         }
         .modal-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
         .modal-title .name-block { min-width: 0; flex: 1; }
         .modal-title .name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 17px; }
-        .modal-title .name-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; font-weight: 500; }
+        .modal-title .name-sub {
+            font-size: 12px; color: var(--text-3); margin-top: 3px; font-weight: 500;
+            display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+        }
+        .modal-title .name-sub .ic { font-size: 12px; }
         .modal-close {
             background: var(--surface-2);
             border: 1px solid var(--border);
@@ -655,7 +745,7 @@
             border-radius: 50%;
             color: var(--text-2); cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            font-size: 20px;
+            font-size: 14px;
             flex-shrink: 0;
             transition: background .15s;
         }
@@ -667,7 +757,6 @@
         }
         @media (max-width: 640px) { .modal-body { padding: 16px; } }
 
-        /* Modal tabs */
         .mtabs {
             display: flex; gap: 4px;
             padding: 4px;
@@ -683,7 +772,9 @@
             font-size: 12.5px; font-weight: 600; color: var(--text-3);
             text-align: center; border-radius: 9px;
             cursor: pointer; transition: all .15s;
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
         }
+        .mtab .ic { font-size: 14px; }
         .mtab:hover { color: var(--text-2); }
         .mtab.active { background: var(--grad-primary); color: white; }
         .mtab-content { display: none; }
@@ -702,16 +793,20 @@
             padding: 11px 14px;
         }
         .detail-row.full { grid-column: 1 / -1; }
-        .detail-label { font-size: 10.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
-        .detail-value { font-size: 13.5px; font-weight: 600; margin-top: 4px; word-break: break-word; line-height: 1.4; }
-        .detail-value code { font-family: ui-monospace, "SF Mono", monospace; font-size: 12px; background: var(--bg-2); padding: 2px 7px; border-radius: 5px; }
+        .detail-label {
+            font-size: 10.5px; color: var(--text-3);
+            text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 5px;
+        }
+        .detail-label .ic { font-size: 12px; }
+        .detail-value { font-size: 13.5px; font-weight: 600; margin-top: 5px; word-break: break-word; line-height: 1.4; }
+        .detail-value code { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: var(--bg-2); padding: 2px 7px; border-radius: 5px; }
         .detail-extra { color: var(--text-3); font-size: 11.5px; font-weight: 500; margin-left: 4px; }
-        .detail-up { color: #34d399; }
+        .detail-up { color: #34d399; font-size: 11.5px; font-weight: 600; }
 
-        /* List items */
         .list-item {
             display: flex; align-items: center; gap: 12px;
-            padding: 10px 12px;
+            padding: 11px 12px;
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 11px;
@@ -724,22 +819,26 @@
             border-radius: 10px; overflow: hidden;
             background: var(--bg-3);
             display: flex; align-items: center; justify-content: center;
+            color: var(--text-3);
             font-size: 18px;
         }
         .list-item .thumb img { width: 100%; height: 100%; object-fit: cover; }
         .list-item .body { flex: 1; min-width: 0; }
         .list-item .row1 {
-            font-weight: 600; font-size: 13px;
+            font-weight: 600; font-size: 13.5px; letter-spacing: -0.005em;
             display: flex; align-items: center; gap: 6px;
             flex-wrap: wrap;
         }
         .list-item .row2 {
             font-size: 11.5px; color: var(--text-3);
-            margin-top: 3px;
-            display: flex; gap: 8px; flex-wrap: wrap;
+            margin-top: 4px;
+            display: flex; gap: 10px; flex-wrap: wrap;
+            font-feature-settings: 'tnum';
         }
+        .list-item .row2 span { display: inline-flex; align-items: center; gap: 4px; }
+        .list-item .row2 .ic { font-size: 12px; }
         .code-tag {
-            font-family: ui-monospace, "SF Mono", monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
             padding: 2px 7px;
             background: rgba(99,102,241,0.18); color: #c7d2fe;
@@ -769,16 +868,17 @@
             animation: modal-in .35s cubic-bezier(.21,1.02,.73,1);
         }
         .login-logo {
-            width: 64px; height: 64px;
+            width: 68px; height: 68px;
             margin: 0 auto 18px;
             border-radius: 18px;
             background: var(--grad-primary);
             display: flex; align-items: center; justify-content: center;
-            font-size: 30px;
-            box-shadow: 0 16px 32px rgba(99,102,241,0.4);
+            font-size: 32px;
+            color: white;
+            box-shadow: 0 18px 40px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.2);
         }
-        .login-box h2 { text-align: center; font-size: 22px; font-weight: 700; }
-        .login-box .sub { text-align: center; color: var(--text-3); font-size: 13px; margin-top: 6px; margin-bottom: 26px; }
+        .login-box h2 { text-align: center; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+        .login-box .sub { text-align: center; color: var(--text-3); font-size: 13px; margin-top: 6px; margin-bottom: 28px; }
         .login-box input { margin-bottom: 14px; padding: 13px 14px; }
         .login-error {
             color: #fca5a5; font-size: 13px; text-align: center;
@@ -787,14 +887,16 @@
             background: rgba(239,68,68,0.08);
             border: 1px solid rgba(239,68,68,0.22);
             border-radius: 10px;
+            display: none;
         }
+        .login-error.show { display: flex; align-items: center; justify-content: center; gap: 6px; }
 
         /* ============== TOAST ============== */
         .toast {
             position: fixed; top: 20px;
             left: 50%; transform: translateX(-50%) translateY(-30px);
-            background: rgba(17,24,39,0.96);
-            backdrop-filter: blur(12px);
+            background: rgba(13,26,48,0.96);
+            backdrop-filter: blur(14px);
             color: var(--text);
             border: 1px solid var(--border-strong);
             padding: 12px 20px; border-radius: 12px;
@@ -804,18 +906,30 @@
             opacity: 0; pointer-events: none;
             min-width: 240px; max-width: 86vw; text-align: center;
             box-shadow: var(--shadow-lg);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         .toast.success { border-color: rgba(16,185,129,0.5); }
+        .toast.success .ic { color: #34d399; }
         .toast.error { border-color: rgba(239,68,68,0.5); }
+        .toast.error .ic { color: #f87171; }
+        .toast .ic { font-size: 16px; }
 
         /* ============== EMPTY ============== */
         .empty {
             text-align: center; padding: 50px 20px;
             color: var(--text-3);
         }
-        .empty .icon { font-size: 42px; opacity: 0.4; margin-bottom: 14px; }
-        .empty .text { font-size: 14px; margin-bottom: 4px; color: var(--text-2); }
+        .empty .ic-big {
+            width: 56px; height: 56px;
+            margin: 0 auto 14px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--surface-2);
+            border-radius: 14px;
+            color: var(--text-3);
+            font-size: 26px;
+        }
+        .empty .text { font-size: 14px; margin-bottom: 4px; color: var(--text-2); font-weight: 500; }
         .empty .sub { font-size: 12px; }
 
         .skeleton-card {
@@ -823,7 +937,7 @@
             border: 1px solid var(--border);
             border-radius: 14px;
             padding: 16px;
-            min-height: 180px;
+            min-height: 200px;
             position: relative;
             overflow: hidden;
         }
@@ -836,7 +950,6 @@
             from { transform: translateX(-100%); } to { transform: translateX(100%); }
         }
 
-        /* ============== TAB CONTENT (page-level) ============== */
         .page { display: none; animation: fade .25s; }
         .page.active { display: block; }
 
@@ -845,83 +958,139 @@
         ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
         ::-webkit-scrollbar-track { background: transparent; }
     </style>
+
+    <!-- ============== ICON SPRITE (lucide-style stroke icons) ============== -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <defs>
+            <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></symbol>
+            <symbol id="i-bot" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></symbol>
+            <symbol id="i-alert-triangle" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+            <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+            <symbol id="i-server" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></symbol>
+            <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+            <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+            <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+            <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+            <symbol id="i-film" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></symbol>
+            <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+            <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="2" x2="9" y2="4"/><line x1="15" y1="2" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="22"/><line x1="15" y1="20" x2="15" y2="22"/><line x1="20" y1="9" x2="22" y2="9"/><line x1="20" y1="15" x2="22" y2="15"/><line x1="2" y1="9" x2="4" y2="9"/><line x1="2" y1="15" x2="4" y2="15"/></symbol>
+            <symbol id="i-hard-drive" viewBox="0 0 24 24"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></symbol>
+            <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></symbol>
+            <symbol id="i-tv" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></symbol>
+            <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+            <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+            <symbol id="i-calendar-plus" viewBox="0 0 24 24"><path d="M19 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/></symbol>
+            <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></symbol>
+            <symbol id="i-play" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/></symbol>
+            <symbol id="i-refresh" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></symbol>
+            <symbol id="i-external-link" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></symbol>
+            <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></symbol>
+            <symbol id="i-edit" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+            <symbol id="i-key" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></symbol>
+            <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+            <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+            <symbol id="i-check-circle" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></symbol>
+            <symbol id="i-x-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></symbol>
+            <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+            <symbol id="i-arrow-right" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
+            <symbol id="i-trending-up" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></symbol>
+            <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+            <symbol id="i-broadcast" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></symbol>
+            <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+            <symbol id="i-crown" viewBox="0 0 24 24"><path d="M2 18h20l-2-9-5 4-3-7-3 7-5-4z" fill="currentColor" fill-opacity="0.3"/></symbol>
+            <symbol id="i-mail" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></symbol>
+            <symbol id="i-at-sign" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></symbol>
+            <symbol id="i-id-card" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><line x1="15" y1="8" x2="19" y2="8"/><line x1="15" y1="12" x2="19" y2="12"/><path d="M5 16c.5-2 2-3 4-3s3.5 1 4 3"/></symbol>
+            <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M12 3l1.9 5.8L20 11l-5.8 1.9L12 19l-1.9-5.8L5 11l5.8-1.9L12 3z" fill="currentColor" fill-opacity="0.2"/><path d="M12 3l1.9 5.8L20 11l-5.8 1.9L12 19l-1.9-5.8L5 11l5.8-1.9L12 3z"/></symbol>
+            <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+        </defs>
+    </svg>
 </head>
 <body>
 
-<!-- ============== LOGIN OVERLAY ============== -->
+<!-- LOGIN OVERLAY -->
 <div class="login-overlay" id="loginOverlay">
     <div class="login-box">
-        <div class="login-logo">👑</div>
+        <div class="login-logo"><svg class="ic" style="font-size:32px"><use href="#i-shield"/></svg></div>
         <h2>Super Admin</h2>
         <div class="sub">Tizimga kirish uchun login va parol kiriting</div>
         <label class="field-label">Login</label>
         <input type="text" id="loginInput" placeholder="Login" autocomplete="username">
         <label class="field-label">Parol</label>
         <input type="password" id="passwordInput" placeholder="Parol" autocomplete="current-password">
-        <div class="login-error" id="loginError">Login yoki parol noto&apos;g&apos;ri</div>
-        <button class="btn btn-success btn-block btn-lg" onclick="doLogin()">Kirish →</button>
+        <div class="login-error" id="loginError"><svg class="ic"><use href="#i-x-circle"/></svg> Login yoki parol noto&apos;g&apos;ri</div>
+        <button class="btn btn-success btn-block btn-lg" onclick="doLogin()">Kirish <svg class="ic"><use href="#i-arrow-right"/></svg></button>
     </div>
 </div>
 
-<!-- ============== TOAST ============== -->
+<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- ============== APP ============== -->
+<!-- APP -->
 <div class="app" id="app" style="display:none">
 
-    <!-- Sidebar (desktop) -->
+    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="brand">
-            <div class="brand-mark">👑</div>
+            <div class="brand-mark"><svg class="ic" style="font-size:20px"><use href="#i-crown"/></svg></div>
             <div class="brand-text">
                 <div class="brand-title">Super Admin</div>
-                <div class="brand-sub">KinoBot SaaS</div>
+                <div class="brand-sub">KinoBot · Boshqaruv</div>
             </div>
         </div>
+        <div class="nav-section-label">Asosiy</div>
         <nav class="nav">
             <div class="nav-item active" data-page="dashboard" onclick="goPage('dashboard')">
-                <span class="icon">📊</span><span>Dashboard</span>
+                <svg class="ic"><use href="#i-grid"/></svg><span>Dashboard</span>
             </div>
             <div class="nav-item" data-page="bots" onclick="goPage('bots')">
-                <span class="icon">🤖</span><span>Botlar</span>
-                <span class="badge" id="navBotsCount">0</span>
+                <svg class="ic"><use href="#i-bot"/></svg><span>Botlar</span>
+                <span class="badge-pill" id="navBotsCount">0</span>
             </div>
             <div class="nav-item warn" data-page="bots" onclick="goPage('bots'); setFilter('expiring')">
-                <span class="icon">⚠️</span><span>Tez tugaydi</span>
-                <span class="badge" id="navExpiring">0</span>
+                <svg class="ic"><use href="#i-alert-triangle"/></svg><span>Tez tugaydi</span>
+                <span class="badge-pill" id="navExpiring">0</span>
             </div>
+        </nav>
+        <div class="nav-section-label">Boshqaruv</div>
+        <nav class="nav">
             <div class="nav-item" data-page="add" onclick="goPage('add')">
-                <span class="icon">➕</span><span>Yangi bot</span>
+                <svg class="ic"><use href="#i-plus"/></svg><span>Yangi bot</span>
             </div>
             <div class="nav-item" data-page="system" onclick="goPage('system')">
-                <span class="icon">🖥</span><span>Server</span>
+                <svg class="ic"><use href="#i-server"/></svg><span>Server</span>
             </div>
         </nav>
         <div class="sidebar-footer">
-            <button class="logout-btn" onclick="doLogout()">🚪 Chiqish</button>
+            <button class="logout-btn" onclick="doLogout()">
+                <svg class="ic"><use href="#i-logout"/></svg> Chiqish
+            </button>
         </div>
     </aside>
 
-    <!-- Mobile topbar -->
+    <!-- MOBILE TOPBAR -->
     <div class="topbar">
         <div class="brand">
-            <div class="brand-mark">👑</div>
-            <div class="brand-text">
-                <div class="brand-title">Super Admin</div>
-            </div>
+            <div class="brand-mark"><svg class="ic" style="font-size:18px"><use href="#i-crown"/></svg></div>
+            <div class="brand-text"><div class="brand-title">Super Admin</div></div>
         </div>
-        <button class="topbar-logout" onclick="doLogout()">Chiqish</button>
+        <button class="topbar-logout" onclick="doLogout()">
+            <svg class="ic" style="font-size:13px"><use href="#i-logout"/></svg> Chiqish
+        </button>
     </div>
 
-    <!-- Main content -->
+    <!-- MAIN -->
     <main class="main">
 
-        <!-- ============== DASHBOARD PAGE ============== -->
+        <!-- DASHBOARD -->
         <div class="page active" id="page-dashboard">
             <div class="page-head">
                 <div>
-                    <div class="page-title">Dashboard 👋</div>
-                    <div class="page-sub" id="dashSub">Barcha botlaringiz haqida umumiy ma&apos;lumot</div>
+                    <div class="page-title">
+                        <span class="title-icon"><svg class="ic"><use href="#i-grid"/></svg></span>
+                        Dashboard
+                    </div>
+                    <div class="page-sub">Barcha botlaringiz haqida umumiy ma&apos;lumot</div>
                 </div>
             </div>
 
@@ -929,30 +1098,33 @@
 
             <div class="section">
                 <div class="section-head">
-                    <div class="section-title"><span class="icon-box">🖥</span> Server holati</div>
-                    <a class="btn btn-ghost btn-sm" onclick="goPage('system')">Batafsil →</a>
+                    <div class="section-title"><span class="ic-box"><svg class="ic"><use href="#i-server"/></svg></span> Server holati</div>
+                    <span class="section-link" onclick="goPage('system')">Batafsil <svg class="ic"><use href="#i-arrow-right"/></svg></span>
                 </div>
-                <div id="systemMini"><div class="empty"><div class="icon">⏳</div>Yuklanmoqda...</div></div>
+                <div id="systemMini"><div class="empty"><div class="ic-big"><svg class="ic"><use href="#i-clock"/></svg></div>Yuklanmoqda...</div></div>
             </div>
 
             <div class="section">
                 <div class="section-head">
-                    <div class="section-title"><span class="icon-box">🤖</span> So&apos;ngi botlar</div>
-                    <a class="btn btn-ghost btn-sm" onclick="goPage('bots')">Barchasi →</a>
+                    <div class="section-title"><span class="ic-box"><svg class="ic"><use href="#i-bot"/></svg></span> So&apos;ngi botlar</div>
+                    <span class="section-link" onclick="goPage('bots')">Barchasi <svg class="ic"><use href="#i-arrow-right"/></svg></span>
                 </div>
                 <div class="bots-grid" id="recentBots"><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
             </div>
         </div>
 
-        <!-- ============== BOTS PAGE ============== -->
+        <!-- BOTS -->
         <div class="page" id="page-bots">
             <div class="page-head">
                 <div>
-                    <div class="page-title">🤖 Botlar</div>
+                    <div class="page-title">
+                        <span class="title-icon"><svg class="ic"><use href="#i-bot"/></svg></span>
+                        Botlar
+                    </div>
                     <div class="page-sub">Mijoz botlarini boshqarish</div>
                 </div>
                 <div class="search-wrap">
-                    <span class="search-icon">🔍</span>
+                    <span class="search-icon"><svg class="ic"><use href="#i-search"/></svg></span>
                     <input type="text" class="search-input" id="searchInput" placeholder="Nom, username, egasi..." oninput="renderBots()">
                 </div>
             </div>
@@ -960,29 +1132,29 @@
             <div class="filter-bar">
                 <div class="filter-pills" id="filterPills">
                     <span class="pill active" data-filter="all" onclick="setFilter('all')">Barcha <span class="count" id="cnt-all">0</span></span>
-                    <span class="pill" data-filter="active" onclick="setFilter('active')">🟢 Faol <span class="count" id="cnt-active">0</span></span>
-                    <span class="pill" data-filter="paused" onclick="setFilter('paused')">⏸ Pauza <span class="count" id="cnt-paused">0</span></span>
-                    <span class="pill" data-filter="expired" onclick="setFilter('expired')">❌ Tugagan <span class="count" id="cnt-expired">0</span></span>
-                    <span class="pill" data-filter="expiring" onclick="setFilter('expiring')">⚠️ &lt;7 kun <span class="count" id="cnt-expiring">0</span></span>
+                    <span class="pill" data-filter="active" onclick="setFilter('active')"><svg class="ic"><use href="#i-check-circle"/></svg> Faol <span class="count" id="cnt-active">0</span></span>
+                    <span class="pill" data-filter="paused" onclick="setFilter('paused')"><svg class="ic"><use href="#i-pause"/></svg> Pauza <span class="count" id="cnt-paused">0</span></span>
+                    <span class="pill" data-filter="expired" onclick="setFilter('expired')"><svg class="ic"><use href="#i-x-circle"/></svg> Tugagan <span class="count" id="cnt-expired">0</span></span>
+                    <span class="pill" data-filter="expiring" onclick="setFilter('expiring')"><svg class="ic"><use href="#i-alert-triangle"/></svg> &lt;7 kun <span class="count" id="cnt-expiring">0</span></span>
                 </div>
             </div>
 
             <div class="bots-grid" id="botsList">
-                <div class="skeleton-card"></div>
-                <div class="skeleton-card"></div>
-                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>
             </div>
         </div>
 
-        <!-- ============== ADD BOT PAGE ============== -->
+        <!-- ADD -->
         <div class="page" id="page-add">
             <div class="page-head">
                 <div>
-                    <div class="page-title">➕ Yangi bot qo&apos;shish</div>
+                    <div class="page-title">
+                        <span class="title-icon"><svg class="ic"><use href="#i-plus"/></svg></span>
+                        Yangi bot
+                    </div>
                     <div class="page-sub">Mijoz uchun bot yaratish va ishga tushirish</div>
                 </div>
             </div>
-
             <div class="card">
                 <div class="form-grid">
                     <div class="full">
@@ -1019,45 +1191,48 @@
                         <textarea id="newNotes" rows="3" placeholder="To&apos;lov holati, kelishilgan narx, eslatma..."></textarea>
                     </div>
                     <div class="full">
-                        <button class="btn btn-success btn-block btn-lg" onclick="createBot()">✅ Bot qo&apos;shish va ishga tushirish</button>
+                        <button class="btn btn-success btn-block btn-lg" onclick="createBot()">
+                            <svg class="ic"><use href="#i-check"/></svg> Bot qo&apos;shish va ishga tushirish
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ============== SYSTEM PAGE ============== -->
+        <!-- SYSTEM -->
         <div class="page" id="page-system">
             <div class="page-head">
                 <div>
-                    <div class="page-title">🖥 Server</div>
+                    <div class="page-title">
+                        <span class="title-icon"><svg class="ic"><use href="#i-server"/></svg></span>
+                        Server
+                    </div>
                     <div class="page-sub">Server resurslari va ma&apos;lumotlar bazasi</div>
                 </div>
             </div>
-
-            <div id="systemFull"><div class="empty"><div class="icon">⏳</div>Yuklanmoqda...</div></div>
+            <div id="systemFull"><div class="empty"><div class="ic-big"><svg class="ic"><use href="#i-clock"/></svg></div>Yuklanmoqda...</div></div>
         </div>
 
     </main>
 
-    <!-- Mobile bottom nav -->
+    <!-- MOBILE BOTTOM NAV -->
     <div class="bottom-nav">
         <div class="bnav-item active" data-page="dashboard" onclick="goPage('dashboard')">
-            <span class="icon">📊</span><span>Dashboard</span>
+            <svg class="ic"><use href="#i-grid"/></svg><span>Dashboard</span>
         </div>
         <div class="bnav-item" data-page="bots" onclick="goPage('bots')">
-            <span class="icon">🤖</span><span>Botlar</span>
+            <svg class="ic"><use href="#i-bot"/></svg><span>Botlar</span>
         </div>
         <div class="bnav-item" data-page="add" onclick="goPage('add')">
-            <span class="icon">➕</span><span>Yangi</span>
+            <svg class="ic"><use href="#i-plus"/></svg><span>Yangi</span>
         </div>
         <div class="bnav-item" data-page="system" onclick="goPage('system')">
-            <span class="icon">🖥</span><span>Server</span>
+            <svg class="ic"><use href="#i-server"/></svg><span>Server</span>
         </div>
     </div>
-
 </div>
 
-<!-- ============== BOT DETAIL MODAL ============== -->
+<!-- MODAL -->
 <div class="modal-overlay" id="botModal" onclick="if(event.target===this) closeModal()">
     <div class="modal">
         <div class="modal-header" id="modalHeader"></div>
@@ -1066,6 +1241,47 @@
 </div>
 
 <script>
+const I = {
+    grid:'<svg class="ic"><use href="#i-grid"/></svg>',
+    bot:'<svg class="ic"><use href="#i-bot"/></svg>',
+    alert:'<svg class="ic"><use href="#i-alert-triangle"/></svg>',
+    plus:'<svg class="ic"><use href="#i-plus"/></svg>',
+    server:'<svg class="ic"><use href="#i-server"/></svg>',
+    search:'<svg class="ic"><use href="#i-search"/></svg>',
+    users:'<svg class="ic"><use href="#i-users"/></svg>',
+    user:'<svg class="ic"><use href="#i-user"/></svg>',
+    film:'<svg class="ic"><use href="#i-film"/></svg>',
+    eye:'<svg class="ic"><use href="#i-eye"/></svg>',
+    cpu:'<svg class="ic"><use href="#i-cpu"/></svg>',
+    disk:'<svg class="ic"><use href="#i-hard-drive"/></svg>',
+    db:'<svg class="ic"><use href="#i-database"/></svg>',
+    tv:'<svg class="ic"><use href="#i-tv"/></svg>',
+    clock:'<svg class="ic"><use href="#i-clock"/></svg>',
+    cal:'<svg class="ic"><use href="#i-calendar"/></svg>',
+    calPlus:'<svg class="ic"><use href="#i-calendar-plus"/></svg>',
+    pause:'<svg class="ic"><use href="#i-pause"/></svg>',
+    play:'<svg class="ic"><use href="#i-play"/></svg>',
+    refresh:'<svg class="ic"><use href="#i-refresh"/></svg>',
+    ext:'<svg class="ic"><use href="#i-external-link"/></svg>',
+    trash:'<svg class="ic"><use href="#i-trash"/></svg>',
+    edit:'<svg class="ic"><use href="#i-edit"/></svg>',
+    key:'<svg class="ic"><use href="#i-key"/></svg>',
+    x:'<svg class="ic"><use href="#i-x"/></svg>',
+    check:'<svg class="ic"><use href="#i-check"/></svg>',
+    checkC:'<svg class="ic"><use href="#i-check-circle"/></svg>',
+    xC:'<svg class="ic"><use href="#i-x-circle"/></svg>',
+    info:'<svg class="ic"><use href="#i-info"/></svg>',
+    arr:'<svg class="ic"><use href="#i-arrow-right"/></svg>',
+    trend:'<svg class="ic"><use href="#i-trending-up"/></svg>',
+    zap:'<svg class="ic"><use href="#i-zap"/></svg>',
+    bcast:'<svg class="ic"><use href="#i-broadcast"/></svg>',
+    mail:'<svg class="ic"><use href="#i-mail"/></svg>',
+    at:'<svg class="ic"><use href="#i-at-sign"/></svg>',
+    id:'<svg class="ic"><use href="#i-id-card"/></svg>',
+    sparkle:'<svg class="ic"><use href="#i-sparkles"/></svg>',
+    star:'<svg class="ic"><use href="#i-star"/></svg>',
+};
+
 const API = '/api/super-admin';
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.expand(); tg.ready(); }
@@ -1077,7 +1293,6 @@ if (urlTg) myTgId = parseInt(urlTg);
 
 let bots = [];
 let currentFilter = 'all';
-let overviewData = null;
 
 function headers() {
     const h = { 'Content-Type': 'application/json' };
@@ -1088,17 +1303,18 @@ function headers() {
 
 function toast(msg, type = 'success') {
     const t = document.getElementById('toast');
-    t.textContent = msg;
+    const icon = type === 'error' ? I.xC : I.checkC;
+    t.innerHTML = icon + '<span>' + msg + '</span>';
     t.className = 'toast ' + type + ' show';
     clearTimeout(t._tm);
     t._tm = setTimeout(() => t.classList.remove('show'), 2700);
 }
 
-// ==================== LOGIN ====================
+// LOGIN
 async function doLogin() {
     const login = document.getElementById('loginInput').value.trim();
     const password = document.getElementById('passwordInput').value;
-    document.getElementById('loginError').style.display = 'none';
+    document.getElementById('loginError').classList.remove('show');
     if (!login || !password) return;
     try {
         const res = await fetch(API + '/login', {
@@ -1113,10 +1329,10 @@ async function doLogin() {
             showApp();
             init();
         } else {
-            document.getElementById('loginError').style.display = 'block';
+            document.getElementById('loginError').classList.add('show');
         }
     } catch (e) {
-        document.getElementById('loginError').style.display = 'block';
+        document.getElementById('loginError').classList.add('show');
     }
 }
 
@@ -1142,16 +1358,14 @@ function showLogin() {
     document.getElementById('loginOverlay').style.display = 'flex';
 }
 
-// ==================== NAVIGATION ====================
+// NAV
 function goPage(name) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-' + name)?.classList.add('active');
-
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     document.querySelectorAll('.nav-item[data-page="' + name + '"]').forEach(i => i.classList.add('active'));
     document.querySelectorAll('.bnav-item').forEach(i => i.classList.remove('active'));
     document.querySelectorAll('.bnav-item[data-page="' + name + '"]').forEach(i => i.classList.add('active'));
-
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1161,7 +1375,7 @@ function setFilter(f) {
     renderBots();
 }
 
-// ==================== INIT ====================
+// INIT
 async function init() {
     await Promise.all([loadOverview(), loadSystem(), loadBots()]);
     setInterval(() => { loadOverview(); loadSystem(); loadBots(); }, 30000);
@@ -1172,10 +1386,9 @@ async function loadOverview() {
         const res = await fetch(API + '/overview', { headers: headers() });
         if (res.status === 401) return showLogin();
         const j = await res.json();
-        if (j.success) { overviewData = j.data; renderOverview(j.data); }
+        if (j.success) renderOverview(j.data);
     } catch {}
 }
-
 async function loadSystem() {
     try {
         const res = await fetch(API + '/system', { headers: headers() });
@@ -1184,7 +1397,6 @@ async function loadSystem() {
         if (j.success) renderSystem(j.data);
     } catch {}
 }
-
 async function loadBots() {
     try {
         const res = await fetch(API + '/bots', { headers: headers() });
@@ -1192,10 +1404,7 @@ async function loadBots() {
         const j = await res.json();
         if (j.success) {
             bots = j.data;
-            renderBots();
-            renderRecent();
-            updateNavBadges();
-            // fetch details
+            renderBots(); renderRecent(); updateNavBadges();
             bots.forEach((b, i) => {
                 fetch(API + '/bots/' + b.id + '/details', { headers: headers() })
                     .then(r => r.json())
@@ -1212,49 +1421,49 @@ function updateNavBadges() {
     document.getElementById('navExpiring').textContent = exp;
 }
 
-// ==================== RENDER OVERVIEW ====================
+// OVERVIEW
 function renderOverview(s) {
     document.getElementById('overviewStats').innerHTML = `
         <div class="stat-card blue">
-            <div class="stat-icon">🤖</div>
+            <div class="stat-icon-wrap" style="font-size:18px">${I.bot}</div>
             <div class="stat-value">${s.bots_total}</div>
             <div class="stat-label">Jami botlar</div>
-            <div class="stat-trend up">▲ ${s.bots_running} polling</div>
+            <div class="stat-trend up">${I.zap} ${s.bots_running} polling</div>
         </div>
         <div class="stat-card green">
-            <div class="stat-icon">🟢</div>
+            <div class="stat-icon-wrap" style="font-size:18px">${I.checkC}</div>
             <div class="stat-value">${s.bots_active}</div>
             <div class="stat-label">Faol</div>
         </div>
         <div class="stat-card orange">
-            <div class="stat-icon">⚠️</div>
+            <div class="stat-icon-wrap" style="font-size:18px">${I.alert}</div>
             <div class="stat-value">${s.expiring_soon}</div>
             <div class="stat-label">Tez tugaydi</div>
         </div>
         <div class="stat-card red">
-            <div class="stat-icon">❌</div>
+            <div class="stat-icon-wrap" style="font-size:18px">${I.xC}</div>
             <div class="stat-value">${s.bots_expired}</div>
             <div class="stat-label">Tugagan</div>
         </div>
         <div class="stat-card violet">
-            <div class="stat-icon">👥</div>
+            <div class="stat-icon-wrap" style="font-size:18px">${I.users}</div>
             <div class="stat-value">${formatNum(s.users_all)}</div>
             <div class="stat-label">Jami userlar</div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">🎬</div>
+            <div class="stat-icon-wrap" style="font-size:18px">${I.film}</div>
             <div class="stat-value">${formatNum(s.movies_all)}</div>
             <div class="stat-label">Jami kinolar</div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">👁</div>
+            <div class="stat-icon-wrap" style="font-size:18px">${I.eye}</div>
             <div class="stat-value">${formatNum(s.views_all)}</div>
             <div class="stat-label">Ko&apos;rishlar</div>
         </div>
     `;
 }
 
-// ==================== RENDER SYSTEM ====================
+// SYSTEM
 function renderSystem(s) {
     const memBar = pct(s.memory.usedPercent);
     const diskBar = pct(s.disk.usedPercent);
@@ -1264,7 +1473,7 @@ function renderSystem(s) {
         <div class="system-grid">
             <div class="progress-card">
                 <div class="progress-head">
-                    <div class="progress-label">💾 Disk</div>
+                    <div class="progress-label">${I.disk} Disk</div>
                     <div class="progress-value">${s.disk.usedPercent.toFixed(1)}%</div>
                 </div>
                 <div class="progress-bar"><div class="progress-fill ${diskBar.cls}" style="width:${diskBar.val}%"></div></div>
@@ -1272,7 +1481,7 @@ function renderSystem(s) {
             </div>
             <div class="progress-card">
                 <div class="progress-head">
-                    <div class="progress-label">🧠 RAM</div>
+                    <div class="progress-label">${I.cpu} RAM</div>
                     <div class="progress-value">${s.memory.usedPercent.toFixed(1)}%</div>
                 </div>
                 <div class="progress-bar"><div class="progress-fill ${memBar.cls}" style="width:${memBar.val}%"></div></div>
@@ -1280,7 +1489,7 @@ function renderSystem(s) {
             </div>
             <div class="progress-card">
                 <div class="progress-head">
-                    <div class="progress-label">⚡ CPU</div>
+                    <div class="progress-label">${I.zap} CPU</div>
                     <div class="progress-value">${s.cpu.usagePercent.toFixed(1)}%</div>
                 </div>
                 <div class="progress-bar"><div class="progress-fill ${cpuBar.cls}" style="width:${cpuBar.val}%"></div></div>
@@ -1288,7 +1497,7 @@ function renderSystem(s) {
             </div>
             <div class="progress-card">
                 <div class="progress-head">
-                    <div class="progress-label">🗄 DB</div>
+                    <div class="progress-label">${I.db} Database</div>
                     <div class="progress-value">${fmtSize(s.database.sizeBytes)}</div>
                 </div>
                 <div class="progress-detail">PostgreSQL · kino_bot</div>
@@ -1301,13 +1510,16 @@ function renderSystem(s) {
     if (s.database.tables && s.database.tables.length > 0) {
         tablesHtml = `
             <div class="card" style="margin-top:14px">
-                <div class="section-title" style="margin-bottom:12px"><span class="icon-box">📋</span> Jadvallar</div>
+                <div class="section-title" style="margin-bottom:14px"><span class="ic-box">${I.db}</span> Jadvallar</div>
                 ${s.database.tables.map(t => `
                     <div class="list-item">
-                        <div class="thumb">📊</div>
+                        <div class="thumb">${I.db}</div>
                         <div class="body">
                             <div class="row1">${escape(t.table)}</div>
-                            <div class="row2">📦 ${fmtSize(t.size)} · ${formatNum(t.rows)} qator</div>
+                            <div class="row2">
+                                <span>${I.disk} ${fmtSize(t.size)}</span>
+                                <span>${I.users} ${formatNum(t.rows)} qator</span>
+                            </div>
                         </div>
                     </div>
                 `).join('')}
@@ -1318,22 +1530,21 @@ function renderSystem(s) {
     const full = mini + `
         <div class="card" style="margin-top:14px">
             <div class="detail-grid">
-                <div class="detail-row"><div class="detail-label">🖥 Hostname</div><div class="detail-value"><code>${s.hostname}</code></div></div>
-                <div class="detail-row"><div class="detail-label">🐧 Platform</div><div class="detail-value"><code>${s.platform}</code></div></div>
-                <div class="detail-row"><div class="detail-label">⏱ Uptime</div><div class="detail-value">${fmtUptime(s.uptime)}</div></div>
-                <div class="detail-row"><div class="detail-label">📁 Mount</div><div class="detail-value"><code>${s.disk.mountPath}</code></div></div>
+                <div class="detail-row"><div class="detail-label">${I.server} Hostname</div><div class="detail-value"><code>${s.hostname}</code></div></div>
+                <div class="detail-row"><div class="detail-label">${I.cpu} Platform</div><div class="detail-value"><code>${s.platform}</code></div></div>
+                <div class="detail-row"><div class="detail-label">${I.clock} Uptime</div><div class="detail-value">${fmtUptime(s.uptime)}</div></div>
+                <div class="detail-row"><div class="detail-label">${I.disk} Mount</div><div class="detail-value"><code>${s.disk.mountPath}</code></div></div>
             </div>
         </div>
     ` + tablesHtml;
     document.getElementById('systemFull').innerHTML = full;
 }
 
-// ==================== RENDER BOTS ====================
+// BOTS
 function renderBots() {
     const list = document.getElementById('botsList');
     const search = (document.getElementById('searchInput')?.value || '').toLowerCase();
 
-    // counts
     const c = { all: bots.length, active: 0, paused: 0, expired: 0, expiring: 0 };
     bots.forEach(b => {
         if (b.status === 'active') c.active++;
@@ -1341,10 +1552,7 @@ function renderBots() {
         if (b.status === 'expired') c.expired++;
         if (b.is_active && !b.is_expired && b.days_left <= 7) c.expiring++;
     });
-    Object.keys(c).forEach(k => {
-        const el = document.getElementById('cnt-' + k);
-        if (el) el.textContent = c[k];
-    });
+    Object.keys(c).forEach(k => { const el = document.getElementById('cnt-' + k); if (el) el.textContent = c[k]; });
 
     const filtered = bots.filter(b => {
         if (currentFilter === 'expiring' && !(b.is_active && !b.is_expired && b.days_left <= 7)) return false;
@@ -1357,23 +1565,30 @@ function renderBots() {
     });
 
     if (!filtered.length) {
-        list.innerHTML = '<div class="empty"><div class="icon">🔍</div><div class="text">Bot topilmadi</div><div class="sub">Filtrni o&apos;zgartirib ko&apos;ring</div></div>';
+        list.innerHTML = '<div class="empty"><div class="ic-big">' + I.search + '</div><div class="text">Bot topilmadi</div><div class="sub">Filtrni o&apos;zgartirib ko&apos;ring</div></div>';
         return;
     }
 
     list.innerHTML = filtered.map(botCardHtml).join('');
 }
 
+function statusDotClass(b) {
+    if (!b.is_active) return 'dot-paused';
+    if (b.is_expired) return 'dot-expired';
+    if (!b.is_running) return 'dot-offline';
+    return 'dot-active';
+}
+
 function botCardHtml(b) {
     const d = b._details;
     const initial = (b.name || b.username || '?').charAt(0).toUpperCase();
-    const avatar = `<img src="${b.photo_url}" onerror="this.parentElement.innerHTML='${initial}'" alt="">`;
-    const ownerLabel = b.owner_full_name || (b.owner_username ? '@' + b.owner_username : (b.owner_telegram_id || '—'));
+    const avatarSrc = `<img src="${b.photo_url}" onerror="this.parentElement.innerHTML='${initial}<div class=\\'status-dot ${statusDotClass(b)}\\'></div>'" alt="">`;
+    const ownerLabel = b.owner_full_name || (b.owner_username ? '@' + b.owner_username : (b.owner_telegram_id ? 'ID: ' + b.owner_telegram_id : 'Egasi belgilanmagan'));
 
     return `
         <div class="bot-card status-${b.status}" onclick="openBotModal(${b.id})">
             <div class="bot-head">
-                <div class="bot-avatar">${avatar}</div>
+                <div class="bot-avatar">${avatarSrc}<div class="status-dot ${statusDotClass(b)}"></div></div>
                 <div class="bot-info">
                     <div class="bot-name">${escape(b.name)}</div>
                     <div class="bot-username ${b.username ? '' : 'muted'}">${b.username ? '@' + b.username : 'username yo&apos;q'}</div>
@@ -1381,25 +1596,24 @@ function botCardHtml(b) {
                 ${statusBadge(b)}
             </div>
             <div class="bot-owner">
-                <span>👤</span>
-                <span>${escape(ownerLabel)}</span>
-                ${b.owner_telegram_id ? '<span class="badge badge-info" style="margin-left:auto">' + b.owner_telegram_id + '</span>' : ''}
+                ${I.user}<span>${escape(ownerLabel)}</span>
+                ${b.owner_telegram_id ? '<span class="id-pill">' + b.owner_telegram_id + '</span>' : ''}
             </div>
             <div class="bot-stats">
-                <div class="bot-stat"><div class="num">${d ? formatNum(d.counts.users_total) : '—'}</div><div class="lbl">User</div></div>
-                <div class="bot-stat"><div class="num">${d ? formatNum(d.counts.movies_total) : '—'}</div><div class="lbl">Kino</div></div>
-                <div class="bot-stat"><div class="num">${d ? d.counts.channels_active : '—'}</div><div class="lbl">Kanal</div></div>
-                <div class="bot-stat"><div class="num">${d ? formatNum(d.counts.views_total) : '—'}</div><div class="lbl">Ko&apos;rish</div></div>
+                <div class="bot-stat"><div class="num">${d ? formatNum(d.counts.users_total) : '—'}</div><div class="lbl">${I.users} User</div></div>
+                <div class="bot-stat"><div class="num">${d ? formatNum(d.counts.movies_total) : '—'}</div><div class="lbl">${I.film} Kino</div></div>
+                <div class="bot-stat"><div class="num">${d ? d.counts.channels_active : '—'}</div><div class="lbl">${I.tv} Kanal</div></div>
+                <div class="bot-stat"><div class="num">${d ? formatNum(d.counts.views_total) : '—'}</div><div class="lbl">${I.eye} Ko&apos;rish</div></div>
             </div>
             <div class="bot-bottom" onclick="event.stopPropagation()">
                 <button class="btn btn-sm btn-secondary" onclick="extend(${b.id}, 7)">+7</button>
                 <button class="btn btn-sm btn-secondary" onclick="extend(${b.id}, 30)">+30</button>
                 <button class="btn btn-sm btn-secondary" onclick="extend(${b.id}, 90)">+90</button>
                 ${b.is_active
-                    ? '<button class="btn btn-sm btn-warn" onclick="setActive(' + b.id + ', false)">⏸</button>'
-                    : '<button class="btn btn-sm btn-success" onclick="setActive(' + b.id + ', true)">▶️</button>'}
-                <button class="btn btn-sm btn-secondary" onclick="restart(${b.id})">🔄</button>
-                <a class="btn btn-sm btn-primary" href="/webapp/admin/?bot=${b.id}" target="_blank">🔗 Ochish</a>
+                    ? '<button class="btn btn-sm btn-warn btn-icon-sm" title="Pauza" onclick="setActive(' + b.id + ', false)">' + I.pause + '</button>'
+                    : '<button class="btn btn-sm btn-success btn-icon-sm" title="Yoqish" onclick="setActive(' + b.id + ', true)">' + I.play + '</button>'}
+                <button class="btn btn-sm btn-secondary btn-icon-sm" title="Restart" onclick="restart(${b.id})">${I.refresh}</button>
+                <a class="btn btn-sm btn-primary" href="/webapp/admin/?bot=${b.id}" target="_blank">${I.ext} Ochish</a>
             </div>
         </div>
     `;
@@ -1408,7 +1622,7 @@ function botCardHtml(b) {
 function renderRecent() {
     const list = document.getElementById('recentBots');
     if (!bots.length) {
-        list.innerHTML = '<div class="empty"><div class="icon">🤖</div><div class="text">Hali bot qo&apos;shilmagan</div><div class="sub">Yangi bot qo&apos;shish uchun yuqoridagi tugmadan foydalaning</div></div>';
+        list.innerHTML = '<div class="empty"><div class="ic-big">' + I.bot + '</div><div class="text">Hali bot qo&apos;shilmagan</div><div class="sub">Yangi bot qo&apos;shish uchun chap menyudagi tugmadan foydalaning</div></div>';
         return;
     }
     const top = [...bots].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 6);
@@ -1416,20 +1630,20 @@ function renderRecent() {
 }
 
 function statusBadge(b) {
-    if (!b.is_active) return '<span class="badge badge-paused">⏸ Pauza</span>';
-    if (b.is_expired) return '<span class="badge badge-expired">❌ Tugagan</span>';
-    if (!b.is_running) return '<span class="badge badge-offline">⚪ Offline</span>';
-    if (b.days_left <= 7) return '<span class="badge badge-warning">⚠️ ' + b.days_left + ' kun</span>';
-    return '<span class="badge badge-active">🟢 Faol</span>';
+    if (!b.is_active) return '<span class="badge badge-paused">' + I.pause + ' Pauza</span>';
+    if (b.is_expired) return '<span class="badge badge-expired">' + I.xC + ' Tugagan</span>';
+    if (!b.is_running) return '<span class="badge badge-offline">Offline</span>';
+    if (b.days_left <= 7) return '<span class="badge badge-warning">' + I.alert + ' ' + b.days_left + ' kun</span>';
+    return '<span class="badge badge-active">' + I.checkC + ' Faol</span>';
 }
 
-// ==================== MODAL ====================
+// MODAL
 async function openBotModal(id) {
     const overlay = document.getElementById('botModal');
     overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
-    document.getElementById('modalHeader').innerHTML = `<div class="modal-title">Yuklanmoqda...</div><button class="modal-close" onclick="closeModal()">×</button>`;
-    document.getElementById('modalBody').innerHTML = '<div class="empty"><div class="icon">⏳</div>Yuklanmoqda...</div>';
+    document.getElementById('modalHeader').innerHTML = '<div class="modal-title">Yuklanmoqda...</div><button class="modal-close" onclick="closeModal()">' + I.x + '</button>';
+    document.getElementById('modalBody').innerHTML = '<div class="empty"><div class="ic-big">' + I.clock + '</div>Yuklanmoqda...</div>';
 
     try {
         const [det, mov, usr, ch] = await Promise.all([
@@ -1440,7 +1654,7 @@ async function openBotModal(id) {
         ]);
         renderModal(det.data, mov.data || [], usr.data || [], ch.data || []);
     } catch {
-        document.getElementById('modalBody').innerHTML = '<div class="empty"><div class="icon">😕</div>Xato</div>';
+        document.getElementById('modalBody').innerHTML = '<div class="empty"><div class="ic-big">' + I.xC + '</div>Xato</div>';
     }
 }
 
@@ -1449,39 +1663,45 @@ function renderModal(d, movies, users, channels) {
     const initial = (b.name || '?').charAt(0).toUpperCase();
     document.getElementById('modalHeader').innerHTML = `
         <div class="modal-title">
-            <div class="bot-avatar" style="width:44px;height:44px;font-size:18px"><img src="${b.photo_url}" onerror="this.parentElement.innerHTML='${initial}'" alt=""></div>
+            <div class="bot-avatar" style="width:46px;height:46px;font-size:18px">
+                <img src="${b.photo_url}" onerror="this.parentElement.innerHTML='${initial}'" alt="">
+                <div class="status-dot ${statusDotClass(b)}"></div>
+            </div>
             <div class="name-block">
                 <div class="name-row">${escape(b.name)} ${statusBadge(b)}</div>
-                <div class="name-sub">${b.username ? '@' + b.username : ''}${b.username && b.owner_full_name ? ' · ' : ''}${b.owner_full_name ? '👤 ' + escape(b.owner_full_name) : ''}</div>
+                <div class="name-sub">
+                    ${b.username ? '<span>' + I.at + '@' + b.username + '</span>' : ''}
+                    ${b.owner_full_name ? '<span>' + I.user + escape(b.owner_full_name) + '</span>' : ''}
+                </div>
             </div>
         </div>
-        <button class="modal-close" onclick="closeModal()">×</button>
+        <button class="modal-close" onclick="closeModal()">${I.x}</button>
     `;
 
     const tabs = `
         <div class="mtabs">
-            <div class="mtab active" onclick="switchMtab(event,'overview')">📊 Umumiy</div>
-            <div class="mtab" onclick="switchMtab(event,'movies')">🎬 Kinolar (${movies.length})</div>
-            <div class="mtab" onclick="switchMtab(event,'users')">👥 Userlar (${users.length})</div>
-            <div class="mtab" onclick="switchMtab(event,'channels')">📺 Kanallar (${channels.length})</div>
-            <div class="mtab" onclick="switchMtab(event,'edit')">✏️ Tahrirlash</div>
+            <div class="mtab active" onclick="switchMtab(event,'overview')">${I.grid} Umumiy</div>
+            <div class="mtab" onclick="switchMtab(event,'movies')">${I.film} Kinolar (${movies.length})</div>
+            <div class="mtab" onclick="switchMtab(event,'users')">${I.users} Userlar (${users.length})</div>
+            <div class="mtab" onclick="switchMtab(event,'channels')">${I.tv} Kanallar (${channels.length})</div>
+            <div class="mtab" onclick="switchMtab(event,'edit')">${I.edit} Tahrirlash</div>
         </div>
     `;
 
     const overview = `
         <div class="mtab-content active" id="mtab-overview">
             <div class="detail-grid">
-                <div class="detail-row"><div class="detail-label">👥 Userlar</div><div class="detail-value">${formatNum(d.counts.users_total)} <span class="detail-up">+${d.counts.users_today} bugun</span></div></div>
-                <div class="detail-row"><div class="detail-label">🎬 Kinolar</div><div class="detail-value">${formatNum(d.counts.movies_total)} <span class="detail-extra">${d.counts.movies_premiere} premyera</span></div></div>
-                <div class="detail-row"><div class="detail-label">📺 Kanallar</div><div class="detail-value">${d.counts.channels_active}<span class="detail-extra">/${d.counts.channels_total}</span></div></div>
-                <div class="detail-row"><div class="detail-label">👁 Ko&apos;rishlar</div><div class="detail-value">${formatNum(d.counts.views_total)} <span class="detail-up">+${d.counts.views_today} bugun</span></div></div>
-                <div class="detail-row"><div class="detail-label">📅 Yaratilgan</div><div class="detail-value">${fmtDate(b.created_at)}</div></div>
-                <div class="detail-row"><div class="detail-label">⏳ Muddat</div><div class="detail-value">${fmtDate(b.expires_at)}<span class="detail-extra">${b.days_left} kun</span></div></div>
-                <div class="detail-row"><div class="detail-label">🔑 Token</div><div class="detail-value"><code>${b.token_masked}</code></div></div>
-                <div class="detail-row"><div class="detail-label">🆔 Egasi</div><div class="detail-value">${b.owner_telegram_id || '—'}${b.owner_username ? ' <span class="detail-extra">@' + b.owner_username + '</span>' : ''}</div></div>
-                ${d.last_movie ? '<div class="detail-row full"><div class="detail-label">🎬 Oxirgi kino</div><div class="detail-value"><span class="code-tag">' + d.last_movie.code + '</span> ' + escape(d.last_movie.title) + ' <span class="detail-extra">' + fmtRel(d.last_movie.created_at) + '</span></div></div>' : ''}
-                ${d.last_user ? '<div class="detail-row full"><div class="detail-label">👤 Oxirgi user</div><div class="detail-value">' + escape(d.last_user.full_name || ('user_' + d.last_user.telegram_id)) + ' <span class="detail-extra">' + fmtRel(d.last_user.created_at) + '</span></div></div>' : ''}
-                ${b.notes ? '<div class="detail-row full"><div class="detail-label">📝 Eslatma</div><div class="detail-value">' + escape(b.notes) + '</div></div>' : ''}
+                <div class="detail-row"><div class="detail-label">${I.users} Userlar</div><div class="detail-value">${formatNum(d.counts.users_total)} <span class="detail-up">+${d.counts.users_today} bugun</span></div></div>
+                <div class="detail-row"><div class="detail-label">${I.film} Kinolar</div><div class="detail-value">${formatNum(d.counts.movies_total)} <span class="detail-extra">${d.counts.movies_premiere} premyera</span></div></div>
+                <div class="detail-row"><div class="detail-label">${I.tv} Kanallar</div><div class="detail-value">${d.counts.channels_active}<span class="detail-extra">/${d.counts.channels_total}</span></div></div>
+                <div class="detail-row"><div class="detail-label">${I.eye} Ko&apos;rishlar</div><div class="detail-value">${formatNum(d.counts.views_total)} <span class="detail-up">+${d.counts.views_today} bugun</span></div></div>
+                <div class="detail-row"><div class="detail-label">${I.cal} Yaratilgan</div><div class="detail-value">${fmtDate(b.created_at)}</div></div>
+                <div class="detail-row"><div class="detail-label">${I.clock} Muddat</div><div class="detail-value">${fmtDate(b.expires_at)}<span class="detail-extra">${b.days_left} kun</span></div></div>
+                <div class="detail-row"><div class="detail-label">${I.key} Token</div><div class="detail-value"><code>${b.token_masked}</code></div></div>
+                <div class="detail-row"><div class="detail-label">${I.id} Egasi</div><div class="detail-value">${b.owner_telegram_id || '—'}${b.owner_username ? ' <span class="detail-extra">@' + b.owner_username + '</span>' : ''}</div></div>
+                ${d.last_movie ? '<div class="detail-row full"><div class="detail-label">' + I.film + ' Oxirgi kino</div><div class="detail-value"><span class="code-tag">' + d.last_movie.code + '</span> ' + escape(d.last_movie.title) + ' <span class="detail-extra">' + fmtRel(d.last_movie.created_at) + '</span></div></div>' : ''}
+                ${d.last_user ? '<div class="detail-row full"><div class="detail-label">' + I.user + ' Oxirgi user</div><div class="detail-value">' + escape(d.last_user.full_name || ('user_' + d.last_user.telegram_id)) + ' <span class="detail-extra">' + fmtRel(d.last_user.created_at) + '</span></div></div>' : ''}
+                ${b.notes ? '<div class="detail-row full"><div class="detail-label">' + I.info + ' Eslatma</div><div class="detail-value">' + escape(b.notes) + '</div></div>' : ''}
             </div>
         </div>
     `;
@@ -1489,19 +1709,21 @@ function renderModal(d, movies, users, channels) {
     const moviesTab = `
         <div class="mtab-content" id="mtab-movies">
             ${movies.length === 0
-                ? '<div class="empty"><div class="icon">🎬</div><div class="text">Hali kino qo&apos;shilmagan</div></div>'
+                ? '<div class="empty"><div class="ic-big">' + I.film + '</div><div class="text">Hali kino qo&apos;shilmagan</div></div>'
                 : movies.map(m => {
                     const thumb = m.thumbnail_file_id
-                        ? '<img src="/api/photo/thumbnail/' + m.thumbnail_file_id + '?bot=' + b.id + '" onerror="this.parentElement.innerHTML=&quot;🎬&quot;">'
-                        : '🎬';
+                        ? '<img src="/api/photo/thumbnail/' + m.thumbnail_file_id + '?bot=' + b.id + '" onerror="this.parentElement.innerHTML=&quot;' + escapeAttr(I.film) + '&quot;">'
+                        : I.film;
                     return '<div class="list-item">'
                         + '<div class="thumb">' + thumb + '</div>'
                         + '<div class="body"><div class="row1">'
                         + '<span class="code-tag">' + m.code + '</span>'
                         + '<span>' + escape(m.title) + '</span>'
-                        + (m.is_premiere ? '<span class="badge badge-warning">⭐</span>' : '')
+                        + (m.is_premiere ? '<span class="badge badge-warning">' + I.star + ' Premyera</span>' : '')
                         + '</div><div class="row2">'
-                        + '👁 ' + formatNum(m.views_count) + ' · 📁 ' + m.file_type + ' · ' + fmtRel(m.created_at)
+                        + '<span>' + I.eye + formatNum(m.views_count) + '</span>'
+                        + '<span>' + m.file_type + '</span>'
+                        + '<span>' + fmtRel(m.created_at) + '</span>'
                         + '</div></div></div>';
                 }).join('')
             }
@@ -1511,16 +1733,18 @@ function renderModal(d, movies, users, channels) {
     const usersTab = `
         <div class="mtab-content" id="mtab-users">
             ${users.length === 0
-                ? '<div class="empty"><div class="icon">👥</div><div class="text">Hali user yo&apos;q</div></div>'
+                ? '<div class="empty"><div class="ic-big">' + I.users + '</div><div class="text">Hali user yo&apos;q</div></div>'
                 : users.map(u => {
                     return '<div class="list-item">'
-                        + '<div class="thumb"><img src="/api/photo/user/' + u.telegram_id + '?bot=' + b.id + '" onerror="this.parentElement.innerHTML=&quot;👤&quot;"></div>'
+                        + '<div class="thumb"><img src="/api/photo/user/' + u.telegram_id + '?bot=' + b.id + '" onerror="this.parentElement.innerHTML=&quot;' + escapeAttr(I.user) + '&quot;"></div>'
                         + '<div class="body"><div class="row1">'
                         + escape(u.full_name || ('user_' + u.telegram_id))
-                        + (u.is_subscribed ? ' <span class="badge badge-active">✓</span>' : '')
-                        + (u.is_banned ? ' <span class="badge badge-expired">🚫</span>' : '')
+                        + (u.is_subscribed ? ' <span class="badge badge-active">' + I.check + '</span>' : '')
+                        + (u.is_banned ? ' <span class="badge badge-expired">Block</span>' : '')
                         + '</div><div class="row2">'
-                        + '🆔 ' + u.telegram_id + (u.username ? ' · @' + u.username : '') + ' · ' + fmtRel(u.created_at)
+                        + '<span>ID: ' + u.telegram_id + '</span>'
+                        + (u.username ? '<span>@' + u.username + '</span>' : '')
+                        + '<span>' + fmtRel(u.created_at) + '</span>'
                         + '</div></div></div>';
                 }).join('')
             }
@@ -1530,13 +1754,15 @@ function renderModal(d, movies, users, channels) {
     const channelsTab = `
         <div class="mtab-content" id="mtab-channels">
             ${channels.length === 0
-                ? '<div class="empty"><div class="icon">📺</div><div class="text">Hali kanal qo&apos;shilmagan</div></div>'
+                ? '<div class="empty"><div class="ic-big">' + I.tv + '</div><div class="text">Hali kanal qo&apos;shilmagan</div></div>'
                 : channels.map(c => {
                     return '<div class="list-item">'
-                        + '<div class="thumb">📺</div>'
+                        + '<div class="thumb">' + I.tv + '</div>'
                         + '<div class="body"><div class="row1">' + escape(c.channel_title || c.channel_username || c.channel_id)
                         + (c.is_active ? ' <span class="badge badge-active">aktiv</span>' : ' <span class="badge badge-expired">o&apos;chiq</span>')
-                        + '</div><div class="row2">' + (c.channel_username ? '@' + c.channel_username : c.channel_id) + ' · 👥 ' + formatNum(c.bot_users_count || 0) + ' user'
+                        + '</div><div class="row2">'
+                        + '<span>' + (c.channel_username ? '@' + c.channel_username : c.channel_id) + '</span>'
+                        + '<span>' + I.users + formatNum(c.bot_users_count || 0) + '</span>'
                         + '</div></div></div>';
                 }).join('')
             }
@@ -1551,16 +1777,16 @@ function renderModal(d, movies, users, channels) {
                 <div><label class="field-label">Egasi @username</label><input type="text" id="ed-owner-username" value="${b.owner_username || ''}"></div>
                 <div class="full"><label class="field-label">Egasi ismi</label><input type="text" id="ed-owner-name" value="${escape(b.owner_full_name || '')}"></div>
                 <div class="full"><label class="field-label">Eslatma</label><textarea id="ed-notes" rows="3">${escape(b.notes || '')}</textarea></div>
-                <div class="full"><button class="btn btn-primary btn-block btn-lg" onclick="saveBotEdit(${b.id})">💾 Saqlash</button></div>
+                <div class="full"><button class="btn btn-primary btn-block btn-lg" onclick="saveBotEdit(${b.id})">${I.check} Saqlash</button></div>
                 <div class="full">
-                    <label class="field-label">🔑 Tokenni o&apos;zgartirish</label>
+                    <label class="field-label">${I.key} Tokenni o&apos;zgartirish</label>
                     <div style="display:flex;gap:8px">
                         <input type="text" id="ed-token" placeholder="Yangi token (avtomatik restart)">
-                        <button class="btn btn-warn" onclick="changeToken(${b.id})">Yangilash</button>
+                        <button class="btn btn-warn" onclick="changeToken(${b.id})">${I.refresh} Yangilash</button>
                     </div>
                 </div>
                 <div class="full" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-                    <button class="btn btn-danger btn-block" onclick="removeBot(${b.id})">🗑 Botni butunlay o&apos;chirish</button>
+                    <button class="btn btn-danger btn-block" onclick="removeBot(${b.id})">${I.trash} Botni butunlay o&apos;chirish</button>
                 </div>
             </div>
         </div>
@@ -1572,7 +1798,9 @@ function renderModal(d, movies, users, channels) {
 function switchMtab(e, name) {
     document.querySelectorAll('.modal .mtab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.modal .mtab-content').forEach(c => c.classList.remove('active'));
-    e.target.classList.add('active');
+    let target = e.target;
+    while (target && !target.classList.contains('mtab')) target = target.parentElement;
+    if (target) target.classList.add('active');
     document.getElementById('mtab-' + name)?.classList.add('active');
 }
 
@@ -1581,7 +1809,7 @@ function closeModal() {
     document.body.style.overflow = '';
 }
 
-// ==================== ACTIONS ====================
+// ACTIONS
 async function createBot() {
     const data = {
         token: document.getElementById('newToken').value.trim(),
@@ -1596,7 +1824,7 @@ async function createBot() {
     const res = await fetch(API + '/bots', { method: 'POST', headers: headers(), body: JSON.stringify(data) });
     const j = await res.json();
     if (j.success) {
-        toast('✅ Bot qo&apos;shildi va ishga tushirildi');
+        toast('Bot qo\'shildi va ishga tushirildi');
         ['newToken','newName','newOwnerId','newOwnerUsername','newOwnerFullName','newNotes'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('newDays').value = 31;
         loadBots(); loadOverview();
@@ -1609,33 +1837,29 @@ async function createBot() {
 async function extend(id, days) {
     const res = await fetch(API + '/bots/' + id + '/extend', { method: 'POST', headers: headers(), body: JSON.stringify({ days }) });
     const j = await res.json();
-    if (j.success) { toast('+' + days + ' kun qo&apos;shildi'); loadBots(); loadOverview(); }
+    if (j.success) { toast('+' + days + ' kun qo\'shildi'); loadBots(); loadOverview(); }
     else toast(j.message || 'Xato', 'error');
 }
-
 async function setActive(id, val) {
     const res = await fetch(API + '/bots/' + id + '/active', { method: 'PATCH', headers: headers(), body: JSON.stringify({ is_active: val }) });
     const j = await res.json();
-    if (j.success) { toast(val ? '▶️ Yoqildi' : '⏸ Pauza qilindi'); loadBots(); }
+    if (j.success) { toast(val ? 'Yoqildi' : 'Pauza qilindi'); loadBots(); }
     else toast(j.message || 'Xato', 'error');
 }
-
 async function restart(id) {
     const res = await fetch(API + '/bots/' + id + '/restart', { method: 'POST', headers: headers() });
     const j = await res.json();
-    if (j.success) toast('🔄 Restart qilindi');
+    if (j.success) toast('Restart qilindi');
     else toast(j.message || 'Xato', 'error');
 }
-
 async function changeToken(id) {
     const token = document.getElementById('ed-token').value.trim();
-    if (!token) return toast('Token bo&apos;sh', 'error');
+    if (!token) return toast('Token bo\'sh', 'error');
     const res = await fetch(API + '/bots/' + id, { method: 'PUT', headers: headers(), body: JSON.stringify({ token }) });
     const j = await res.json();
-    if (j.success) { toast('🔑 Token yangilandi'); closeModal(); loadBots(); }
+    if (j.success) { toast('Token yangilandi'); closeModal(); loadBots(); }
     else toast(j.message || 'Xato', 'error');
 }
-
 async function saveBotEdit(id) {
     const data = {
         name: document.getElementById('ed-name').value.trim(),
@@ -1646,22 +1870,24 @@ async function saveBotEdit(id) {
     };
     const res = await fetch(API + '/bots/' + id, { method: 'PUT', headers: headers(), body: JSON.stringify(data) });
     const j = await res.json();
-    if (j.success) { toast('💾 Saqlandi'); loadBots(); openBotModal(id); }
+    if (j.success) { toast('Saqlandi'); loadBots(); openBotModal(id); }
     else toast(j.message || 'Xato', 'error');
 }
-
 async function removeBot(id) {
-    if (!confirm('Botni va uning ma&apos;lumotlarini butunlay o&apos;chirasizmi?')) return;
+    if (!confirm('Botni va uning ma\'lumotlarini butunlay o\'chirasizmi?')) return;
     const res = await fetch(API + '/bots/' + id, { method: 'DELETE', headers: headers() });
     const j = await res.json();
-    if (j.success) { toast('🗑 O&apos;chirildi'); closeModal(); loadBots(); loadOverview(); }
+    if (j.success) { toast('O\'chirildi'); closeModal(); loadBots(); loadOverview(); }
     else toast(j.message || 'Xato', 'error');
 }
 
-// ==================== HELPERS ====================
+// HELPERS
 function escape(s) {
     if (s == null) return '';
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s) {
+    return String(s || '').replace(/"/g, '&quot;');
 }
 function formatNum(n) {
     if (n == null) return '0';
@@ -1701,11 +1927,8 @@ function fmtRel(s) {
     return new Date(s).toLocaleDateString('uz-UZ');
 }
 
-// ==================== START ====================
-if (adminToken || myTgId) {
-    showApp();
-    init();
-}
+// START
+if (adminToken || myTgId) { showApp(); init(); }
 </script>
 </body>
 </html>
