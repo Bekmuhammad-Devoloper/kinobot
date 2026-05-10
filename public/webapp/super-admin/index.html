@@ -3,193 +3,596 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>👑 Super Admin - KinoBot</title>
+    <meta name="theme-color" content="#0b1220">
+    <title>👑 Super Admin — KinoBot</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0b1220;
+            --bg-2: #111a2e;
+            --surface: rgba(255,255,255,0.04);
+            --surface-2: rgba(255,255,255,0.06);
+            --surface-3: rgba(255,255,255,0.08);
+            --border: rgba(255,255,255,0.07);
+            --border-strong: rgba(255,255,255,0.14);
+            --text: #eef2ff;
+            --text-2: #a8b2d1;
+            --text-3: #6b7895;
+            --primary: #6366f1;
+            --primary-2: #8b5cf6;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --pink: #ec4899;
+            --orange: #fb923c;
+            --grad-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            --grad-blue: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+            --grad-red: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%);
+            --grad-green: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            --grad-orange: linear-gradient(135deg, #f59e0b 0%, #fb923c 100%);
+            --shadow-lg: 0 20px 48px rgba(2,6,23,0.55);
+            --radius: 14px;
+            --radius-lg: 18px;
+            --radius-sm: 10px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: #0e1421;
-            color: #e8eef9;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+            background:
+                radial-gradient(1200px 600px at 100% -10%, rgba(99,102,241,0.18), transparent 60%),
+                radial-gradient(900px 500px at -10% 110%, rgba(236,72,153,0.12), transparent 55%),
+                var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            padding: 16px;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.5;
         }
+        .container { max-width: 1100px; margin: 0 auto; padding: 16px; padding-bottom: 80px; }
+
+        /* Header */
         .header {
-            text-align: center;
-            padding: 20px 0;
+            display: flex; align-items: center; justify-content: space-between;
+            background: linear-gradient(180deg, #182034 0%, #0f172a 100%);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 18px 22px;
             margin-bottom: 16px;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            border-radius: 12px;
+            position: relative; overflow: hidden;
         }
-        .header h1 { font-size: 22px; }
-        .header .subtitle { font-size: 13px; opacity: .7; margin-top: 4px; }
+        .header::after {
+            content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(99,102,241,0.5), transparent);
+        }
+        .header h1 {
+            font-size: 22px; font-weight: 700;
+            background: linear-gradient(90deg, #fff, #c7d2fe);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .header h1 .crown { -webkit-text-fill-color: initial; }
+        .header .subtitle { color: var(--text-2); font-size: 12.5px; margin-top: 4px; }
+        .logout-btn {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.4);
+            color: #fca5a5; padding: 6px 14px; border-radius: 10px;
+            cursor: pointer; font-size: 13px; font-weight: 600;
+            transition: all .15s;
+        }
+        .logout-btn:hover { background: rgba(239,68,68,0.2); }
+
+        /* Stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .stat-card {
+            position: relative;
+            padding: 14px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: var(--grad-primary);
+        }
+        .stat-card.blue::before { background: var(--grad-blue); }
+        .stat-card.green::before { background: var(--grad-green); }
+        .stat-card.red::before { background: var(--grad-red); }
+        .stat-card.orange::before { background: var(--grad-orange); }
+        .stat-icon {
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--surface-2);
+            border-radius: 9px;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .stat-value { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+        .stat-label { font-size: 11.5px; color: var(--text-3); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+        /* Section */
+        .section { margin-bottom: 18px; }
+        .section-title {
+            font-size: 13px; font-weight: 700;
+            color: var(--text-2);
+            text-transform: uppercase; letter-spacing: 0.06em;
+            margin-bottom: 10px;
+            display: flex; align-items: center; gap: 8px;
+        }
         .card {
-            background: #182234;
-            border-radius: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 16px;
-            margin-bottom: 12px;
-            border: 1px solid #243043;
         }
-        .bot-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #243043;
+
+        /* Form */
+        .form-grid { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+        .form-grid .full { grid-column: 1 / -1; }
+        label.field {
+            display: block;
+            font-size: 12.5px; font-weight: 600;
+            color: var(--text-2); margin-bottom: 4px;
         }
-        .bot-row:last-child { border-bottom: none; }
-        .bot-name { font-weight: 600; font-size: 16px; }
-        .bot-meta { font-size: 12px; opacity: .7; margin-top: 2px; }
-        .badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 8px;
-            font-size: 11px;
-            margin-left: 4px;
-        }
-        .badge-active { background: #1f5f3a; color: #5fe098; }
-        .badge-paused { background: #5a4a1f; color: #f0c14a; }
-        .badge-expired { background: #5a1f1f; color: #ff7878; }
-        .btn {
-            background: #2a7be4;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-        }
-        .btn:hover { background: #1a6bd0; }
-        .btn-danger { background: #c44; }
-        .btn-warn { background: #b87a00; }
-        .btn-success { background: #1f8d4d; }
-        .btn-sm { padding: 5px 10px; font-size: 12px; }
-        .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
         input, textarea, select {
             width: 100%;
-            background: #0e1421;
-            color: #e8eef9;
-            border: 1px solid #243043;
-            border-radius: 8px;
-            padding: 10px;
-            font-size: 14px;
-            margin-top: 4px;
+            background: var(--bg-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 11px 13px;
+            color: var(--text); font-size: 14px;
+            font-family: inherit;
+            transition: border-color .15s, box-shadow .15s;
         }
-        label { font-size: 13px; opacity: .8; display: block; margin-top: 10px; }
-        .empty { text-align: center; padding: 30px; opacity: .6; }
-        .form-grid { display: grid; gap: 6px; }
-        .row-flex { display: flex; gap: 8px; }
-        .row-flex > * { flex: 1; }
-        h2 { font-size: 16px; margin-bottom: 8px; }
-        .toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #2a7be4;
-            color: white;
-            padding: 10px 16px;
-            border-radius: 8px;
-            z-index: 1000;
-            display: none;
+        input::placeholder, textarea::placeholder { color: var(--text-3); }
+        input:focus, textarea:focus, select:focus {
+            outline: none; border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.18);
         }
-        .toast.error { background: #c44; }
-        .toast.success { background: #1f8d4d; }
-        .ext-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-        .open-link { color: #5fa9ff; text-decoration: none; font-size: 12px; }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 10px 16px; border: none;
+            border-radius: 10px;
+            font-size: 13.5px; font-weight: 600;
+            cursor: pointer;
+            transition: transform .12s, filter .15s, background .15s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--grad-primary); color: white; box-shadow: 0 6px 16px rgba(99,102,241,0.3); }
+        .btn-primary:hover { filter: brightness(1.08); }
+        .btn-success { background: var(--grad-green); color: white; box-shadow: 0 6px 16px rgba(16,185,129,0.3); }
+        .btn-warn { background: rgba(245,158,11,0.18); color: #fcd34d; border: 1px solid rgba(245,158,11,0.4); }
+        .btn-danger { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.35); }
+        .btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--surface-3); }
+        .btn-sm { padding: 6px 11px; font-size: 12px; }
+        .btn-lg { padding: 13px 18px; font-size: 15px; width: 100%; }
+
+        /* Filters */
+        .filters {
+            display: flex; gap: 8px; flex-wrap: wrap;
+            margin-bottom: 12px; align-items: center;
+        }
+        .search-input {
+            flex: 1; min-width: 180px; max-width: 360px;
+            padding: 9px 12px;
+        }
+        .filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+        .pill {
+            padding: 6px 12px; font-size: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            cursor: pointer;
+            transition: background .15s, border-color .15s;
+            color: var(--text-2); font-weight: 600;
+        }
+        .pill:hover { background: var(--surface-2); }
+        .pill.active { background: var(--grad-primary); color: white; border-color: transparent; }
+
+        /* Bot card */
+        .bot-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px;
+            margin-bottom: 10px;
+            transition: border-color .15s, transform .15s, background .15s;
+            cursor: pointer;
+        }
+        .bot-card:hover { border-color: var(--border-strong); background: var(--surface-2); }
+        .bot-row { display: flex; align-items: center; gap: 12px; }
+        .bot-avatar {
+            width: 56px; height: 56px;
+            border-radius: 14px;
+            background: var(--grad-primary);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 22px; color: white;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .bot-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .bot-info { flex: 1; min-width: 0; }
+        .bot-name {
+            font-size: 16px; font-weight: 700;
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        }
+        .bot-username { color: var(--accent); font-size: 12.5px; font-weight: 500; }
+        .bot-meta {
+            font-size: 12px; color: var(--text-3); margin-top: 4px;
+            display: flex; gap: 12px; flex-wrap: wrap;
+        }
+        .bot-meta .chip {
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .bot-stats {
+            display: flex; gap: 14px; margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .stat-mini {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 10px;
+            background: var(--surface-2);
+            border-radius: 8px;
+            font-size: 11.5px; font-weight: 600;
+            color: var(--text-2);
+        }
+        .stat-mini .num { color: var(--text); font-weight: 700; }
+
+        /* Status badges */
+        .badge {
+            display: inline-block; padding: 3px 9px;
+            border-radius: 999px; font-size: 10.5px;
+            font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+        }
+        .badge-active { background: rgba(16,185,129,0.18); color: #34d399; }
+        .badge-paused { background: rgba(245,158,11,0.18); color: #fbbf24; }
+        .badge-expired { background: rgba(239,68,68,0.18); color: #fca5a5; }
+        .badge-offline { background: rgba(107,120,149,0.25); color: var(--text-2); }
+        .badge-warning { background: rgba(245,158,11,0.18); color: #fbbf24; }
+
+        /* Bot card actions */
+        .bot-actions {
+            display: flex; gap: 6px; flex-wrap: wrap;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(2,6,23,0.78);
+            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000; padding: 16px;
+        }
+        .modal-overlay.active { display: flex; animation: fade .2s; }
+        .modal {
+            background: var(--bg-2);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-lg);
+            width: 100%; max-width: 720px;
+            max-height: 90vh; overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            animation: pop .25s cubic-bezier(.21,1.02,.73,1);
+        }
+        .modal-header {
+            position: sticky; top: 0;
+            background: var(--bg-2);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--border);
+            z-index: 5;
+        }
+        .modal-title { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .modal-close {
+            background: var(--surface-2); border: 1px solid var(--border);
+            width: 32px; height: 32px; border-radius: 50%;
+            color: var(--text-2); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .modal-close:hover { background: var(--surface-3); color: var(--text); }
+        .modal-body { padding: 18px; }
+        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pop { from { transform: scale(.92); opacity: 0;} to { transform: scale(1); opacity: 1; } }
+
+        /* Detail tabs */
+        .tabs {
+            display: flex; gap: 4px;
+            padding: 4px;
+            background: var(--surface);
+            border-radius: 12px;
+            margin-bottom: 14px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab {
+            flex: 1; padding: 9px 14px; min-width: max-content;
+            font-size: 12.5px; font-weight: 600; color: var(--text-3);
+            text-align: center; border-radius: 8px;
+            cursor: pointer; transition: all .15s;
+        }
+        .tab:hover { color: var(--text-2); }
+        .tab.active { background: var(--grad-primary); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Detail items */
+        .detail-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 8px; margin-bottom: 14px;
+        }
+        @media (max-width: 500px) { .detail-grid { grid-template-columns: 1fr; } }
+        .detail-row {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 13px;
+        }
+        .detail-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; }
+        .detail-value { font-size: 14px; font-weight: 600; margin-top: 2px; word-break: break-word; }
+        .detail-value code { font-family: ui-monospace, "SF Mono", monospace; font-size: 12px; background: var(--bg-2); padding: 1px 6px; border-radius: 4px; }
+
+        .list-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 6px;
+        }
+        .list-item .thumb {
+            width: 44px; height: 44px; flex-shrink: 0;
+            border-radius: 9px; overflow: hidden;
+            background: var(--surface-2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .list-item .thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .list-item .body { flex: 1; min-width: 0; }
+        .list-item .row1 { font-weight: 600; font-size: 13.5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .list-item .row2 { font-size: 11.5px; color: var(--text-3); margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .code-tag {
+            font-family: ui-monospace, "SF Mono", monospace;
+            font-size: 11px; padding: 1px 6px;
+            background: rgba(99,102,241,0.18); color: #c7d2fe;
+            border-radius: 5px; font-weight: 600;
+        }
+
+        /* Login overlay */
         .login-overlay {
-            position: fixed;
-            inset: 0;
-            background: #0e1421;
+            position: fixed; inset: 0; background: var(--bg);
+            background-image:
+                radial-gradient(800px 400px at 50% 0%, rgba(99,102,241,0.18), transparent 60%),
+                radial-gradient(700px 400px at 50% 100%, rgba(236,72,153,0.10), transparent 50%);
             z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
         }
         .login-box {
-            background: #182234;
-            border-radius: 16px;
-            padding: 32px 24px;
-            width: 100%;
-            max-width: 360px;
-            border: 1px solid #243043;
+            background: var(--bg-2);
+            border: 1px solid var(--border-strong);
+            border-radius: 20px;
+            padding: 36px 28px;
+            width: 100%; max-width: 380px;
+            box-shadow: var(--shadow-lg);
         }
-        .login-box h2 { text-align: center; margin-bottom: 24px; font-size: 22px; }
-        .login-box input { margin-top: 6px; margin-bottom: 14px; }
-        .login-box .btn { width: 100%; padding: 12px; font-size: 15px; margin-top: 4px; }
-        .login-error { color: #ff7878; font-size: 13px; margin-bottom: 10px; display: none; text-align: center; }
-        .logout-btn { float: right; background: transparent; border: 1px solid #c44; color: #ff7878; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .login-box h2 { text-align: center; font-size: 22px; margin-bottom: 6px; }
+        .login-box .sub { text-align: center; color: var(--text-3); font-size: 13px; margin-bottom: 24px; }
+        .login-box label { margin-bottom: 6px; }
+        .login-box input { margin-bottom: 12px; }
+        .login-error {
+            color: #fca5a5; font-size: 13px; text-align: center;
+            display: none; margin-bottom: 10px; padding: 8px;
+            background: rgba(239,68,68,0.08); border-radius: 8px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed; top: 18px; left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(17,24,39,0.96);
+            backdrop-filter: blur(10px);
+            color: var(--text);
+            border: 1px solid var(--border-strong);
+            padding: 11px 18px; border-radius: 12px;
+            font-size: 13.5px; font-weight: 500;
+            z-index: 3000;
+            transition: transform .35s cubic-bezier(.21,1.02,.73,1), opacity .25s;
+            opacity: 0; pointer-events: none;
+            min-width: 240px; max-width: 86vw; text-align: center;
+            box-shadow: var(--shadow-lg);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .toast.success { border-color: rgba(16,185,129,0.5); }
+        .toast.error { border-color: rgba(239,68,68,0.5); }
+
+        /* Empty state */
+        .empty {
+            text-align: center; padding: 40px 20px;
+            color: var(--text-3);
+        }
+
+        /* System stats progress bars */
+        .progress-container {
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        .progress-row { font-size: 13px; }
+        .progress-row .label { display: flex; justify-content: space-between; margin-bottom: 6px; color: var(--text-2); }
+        .progress-row .label .value { color: var(--text); font-weight: 600; }
+        .progress-bar {
+            height: 8px; background: var(--surface-2);
+            border-radius: 4px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; transition: width .4s;
+            background: var(--grad-blue);
+        }
+        .progress-fill.warn { background: var(--grad-orange); }
+        .progress-fill.crit { background: var(--grad-red); }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
     </style>
 </head>
 <body>
+    <!-- Login -->
     <div class="login-overlay" id="loginOverlay">
         <div class="login-box">
-            <h2>🔐 Super Admin</h2>
-            <label>Login
-                <input type="text" id="loginInput" placeholder="Login" autocomplete="username">
-            </label>
-            <label>Parol
-                <input type="password" id="passwordInput" placeholder="Parol" autocomplete="current-password">
-            </label>
+            <h2>👑 Super Admin</h2>
+            <div class="sub">Tizimga kirish uchun login va parol kiriting</div>
+            <label class="field">Login</label>
+            <input type="text" id="loginInput" placeholder="Login" autocomplete="username">
+            <label class="field">Parol</label>
+            <input type="password" id="passwordInput" placeholder="Parol" autocomplete="current-password">
             <div class="login-error" id="loginError">Login yoki parol noto'g'ri</div>
-            <button class="btn btn-success" onclick="doLogin()">Kirish →</button>
+            <button class="btn btn-success btn-lg" onclick="doLogin()">Kirish →</button>
         </div>
     </div>
 
     <div class="toast" id="toast"></div>
 
-    <div class="header">
-        <h1>👑 Super Admin Panel</h1>
-        <div class="subtitle">Zakaz botlarni boshqarish <button class="logout-btn" onclick="doLogout()">Chiqish</button></div>
-    </div>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1><span class="crown">👑</span> Super Admin</h1>
+                <div class="subtitle">Barcha mijoz botlarini boshqarish</div>
+            </div>
+            <button class="logout-btn" onclick="doLogout()">Chiqish</button>
+        </div>
 
-    <div class="card">
-        <h2>➕ Yangi Bot Qo'shish</h2>
-        <div class="form-grid">
-            <label>Bot tokeni
-                <input type="text" id="newToken" placeholder="123456:ABC...">
-            </label>
-            <label>Bot nomi (mijoz uchun)
-                <input type="text" id="newName" placeholder="Mijoz ismi yoki kompaniya">
-            </label>
-            <label>Egasining Telegram ID si
-                <input type="number" id="newOwner" placeholder="123456789">
-            </label>
-            <label>Muddat (kun)
-                <input type="number" id="newDays" value="31" min="1" max="3650">
-            </label>
-            <label>Izoh (ixtiyoriy)
-                <textarea id="newNotes" rows="2" placeholder="Eslatma..."></textarea>
-            </label>
-            <button class="btn btn-success" onclick="createBot()" style="margin-top: 10px;">✅ Bot qo'shish va ishga tushirish</button>
+        <!-- System stats -->
+        <div class="section">
+            <div class="section-title">📊 Server statistikasi</div>
+            <div class="card" id="systemStats">
+                <div class="empty">Yuklanmoqda...</div>
+            </div>
+        </div>
+
+        <!-- Overview stats -->
+        <div class="stats-grid" id="overviewStats"></div>
+
+        <!-- Add Bot -->
+        <div class="section">
+            <div class="section-title">➕ Yangi bot qo'shish</div>
+            <div class="card">
+                <div class="form-grid">
+                    <div class="full">
+                        <label class="field">Bot tokeni *</label>
+                        <input type="text" id="newToken" placeholder="123456:ABC...">
+                    </div>
+                    <div>
+                        <label class="field">Bot nomi (sizga ko'rsatish uchun) *</label>
+                        <input type="text" id="newName" placeholder="Cinema.bot">
+                    </div>
+                    <div>
+                        <label class="field">Muddat (kun)</label>
+                        <input type="number" id="newDays" value="31" min="1" max="3650">
+                    </div>
+                    <div>
+                        <label class="field">Egasining Telegram ID si</label>
+                        <input type="number" id="newOwnerId" placeholder="123456789">
+                    </div>
+                    <div>
+                        <label class="field">Egasining @username (ixtiyoriy)</label>
+                        <input type="text" id="newOwnerUsername" placeholder="@username">
+                    </div>
+                    <div class="full">
+                        <label class="field">Egasining ismi (ixtiyoriy)</label>
+                        <input type="text" id="newOwnerFullName" placeholder="Bekmuhammad">
+                    </div>
+                    <div class="full">
+                        <label class="field">Izoh / eslatma</label>
+                        <textarea id="newNotes" rows="2" placeholder="To'lov holati, kelishilgan narx va h.k."></textarea>
+                    </div>
+                    <div class="full">
+                        <button class="btn btn-success btn-lg" onclick="createBot()">✅ Bot qo'shish va ishga tushirish</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bots list -->
+        <div class="section">
+            <div class="section-title">📋 Botlar ro'yxati (<span id="botsCount">0</span>)</div>
+            <div class="card">
+                <div class="filters">
+                    <input type="text" class="search-input" id="searchInput" placeholder="🔍 Qidirish..." oninput="renderBots()">
+                    <div class="filter-pills">
+                        <span class="pill active" data-filter="all" onclick="setFilter('all')">Barcha</span>
+                        <span class="pill" data-filter="active" onclick="setFilter('active')">🟢 Faol</span>
+                        <span class="pill" data-filter="paused" onclick="setFilter('paused')">⏸ Pauza</span>
+                        <span class="pill" data-filter="expired" onclick="setFilter('expired')">❌ Tugagan</span>
+                        <span class="pill" data-filter="expiring" onclick="setFilter('expiring')">⚠️ Tez tugaydi</span>
+                    </div>
+                </div>
+                <div id="botsList"><div class="empty">Yuklanmoqda...</div></div>
+            </div>
         </div>
     </div>
 
-    <div class="card">
-        <h2>📋 Botlar Ro'yxati</h2>
-        <div id="botsList"><div class="empty">Yuklanmoqda...</div></div>
+    <!-- Bot detail modal -->
+    <div class="modal-overlay" id="botModal" onclick="if(event.target===this) closeModal()">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Bot detail</div>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
     </div>
 
     <script>
+        const API = '/api/super-admin';
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.expand(); tg.ready(); }
 
-        const API = '/api/super-admin/bots';
         let myTgId = tg?.initDataUnsafe?.user?.id;
         let adminToken = localStorage.getItem('sa_token');
-
-        // Allow URL override for desktop testing
         const urlTg = new URLSearchParams(location.search).get('tg');
         if (urlTg) myTgId = parseInt(urlTg);
 
+        let bots = [];
+        let currentFilter = 'all';
+
+        function headers() {
+            const h = { 'Content-Type': 'application/json' };
+            if (adminToken) h['x-admin-token'] = adminToken;
+            else if (myTgId) h['x-telegram-id'] = String(myTgId);
+            return h;
+        }
+
+        function toast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast ' + type + ' show';
+            setTimeout(() => t.classList.remove('show'), 2700);
+        }
+
+        // ========== LOGIN ==========
         async function doLogin() {
             const login = document.getElementById('loginInput').value.trim();
             const password = document.getElementById('passwordInput').value;
             document.getElementById('loginError').style.display = 'none';
             if (!login || !password) return;
             try {
-                const res = await fetch('/api/super-admin/login', {
+                const res = await fetch(API + '/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ login, password }),
@@ -199,7 +602,7 @@
                     adminToken = j.token;
                     localStorage.setItem('sa_token', j.token);
                     document.getElementById('loginOverlay').style.display = 'none';
-                    loadBots();
+                    init();
                 } else {
                     document.getElementById('loginError').style.display = 'block';
                 }
@@ -207,187 +610,525 @@
                 document.getElementById('loginError').style.display = 'block';
             }
         }
-
         function doLogout() {
             localStorage.removeItem('sa_token');
             adminToken = null;
+            location.reload();
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const pwd = document.getElementById('passwordInput');
+            pwd.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+        });
+
+        // ========== INIT ==========
+        async function init() {
+            await Promise.all([loadOverview(), loadSystem(), loadBots()]);
+            // Auto-refresh every 30s
+            setInterval(() => { loadOverview(); loadSystem(); loadBots(); }, 30000);
+        }
+
+        // ========== LOAD ==========
+        async function loadOverview() {
+            try {
+                const res = await fetch(API + '/overview', { headers: headers() });
+                if (res.status === 401) return showLogin();
+                const j = await res.json();
+                if (j.success) renderOverview(j.data);
+            } catch {}
+        }
+        async function loadSystem() {
+            try {
+                const res = await fetch(API + '/system', { headers: headers() });
+                if (res.status === 401) return showLogin();
+                const j = await res.json();
+                if (j.success) renderSystem(j.data);
+            } catch {}
+        }
+        async function loadBots() {
+            try {
+                const res = await fetch(API + '/bots', { headers: headers() });
+                if (res.status === 401) return showLogin();
+                const j = await res.json();
+                if (j.success) {
+                    // attach details lazily
+                    bots = j.data;
+                    renderBots();
+                    // fetch detailed counts in parallel
+                    bots.forEach((b, i) => {
+                        fetch(API + '/bots/' + b.id + '/details', { headers: headers() })
+                            .then(r => r.json())
+                            .then(d => {
+                                if (d.success) {
+                                    bots[i]._details = d.data;
+                                    renderBots();
+                                }
+                            }).catch(() => {});
+                    });
+                }
+            } catch {}
+        }
+        function showLogin() {
+            adminToken = null;
+            localStorage.removeItem('sa_token');
             document.getElementById('loginOverlay').style.display = 'flex';
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('passwordInput').addEventListener('keydown', e => {
-                if (e.key === 'Enter') doLogin();
+        // ========== RENDER ==========
+        function renderOverview(s) {
+            document.getElementById('overviewStats').innerHTML = `
+                <div class="stat-card blue">
+                    <div class="stat-icon">🤖</div>
+                    <div class="stat-value">${s.bots_total}</div>
+                    <div class="stat-label">Jami botlar</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-icon">🟢</div>
+                    <div class="stat-value">${s.bots_active}</div>
+                    <div class="stat-label">Faol</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-icon">⚠️</div>
+                    <div class="stat-value">${s.expiring_soon}</div>
+                    <div class="stat-label">7 kun ichida tugaydi</div>
+                </div>
+                <div class="stat-card red">
+                    <div class="stat-icon">❌</div>
+                    <div class="stat-value">${s.bots_expired}</div>
+                    <div class="stat-label">Muddati tugagan</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value">${formatNum(s.users_all)}</div>
+                    <div class="stat-label">Jami userlar</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎬</div>
+                    <div class="stat-value">${formatNum(s.movies_all)}</div>
+                    <div class="stat-label">Jami kinolar</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👁</div>
+                    <div class="stat-value">${formatNum(s.views_all)}</div>
+                    <div class="stat-label">Jami ko'rishlar</div>
+                </div>
+            `;
+        }
+
+        function renderSystem(s) {
+            const memBar = pct(s.memory.usedPercent);
+            const diskBar = pct(s.disk.usedPercent);
+            const cpuBar = pct(s.cpu.usagePercent);
+            document.getElementById('systemStats').innerHTML = `
+                <div class="progress-container">
+                    <div class="progress-row">
+                        <div class="label">
+                            <span>💾 Disk</span>
+                            <span class="value">${fmtSize(s.disk.used)} / ${fmtSize(s.disk.total)} (${s.disk.usedPercent.toFixed(1)}%)</span>
+                        </div>
+                        <div class="progress-bar"><div class="progress-fill ${diskBar.cls}" style="width: ${diskBar.val}%"></div></div>
+                    </div>
+                    <div class="progress-row">
+                        <div class="label">
+                            <span>🧠 RAM</span>
+                            <span class="value">${fmtSize(s.memory.used)} / ${fmtSize(s.memory.total)} (${s.memory.usedPercent.toFixed(1)}%)</span>
+                        </div>
+                        <div class="progress-bar"><div class="progress-fill ${memBar.cls}" style="width: ${memBar.val}%"></div></div>
+                    </div>
+                    <div class="progress-row">
+                        <div class="label">
+                            <span>⚡ CPU yuk (1m)</span>
+                            <span class="value">${s.cpu.loadAvg[0].toFixed(2)} / ${s.cpu.count} core (${s.cpu.usagePercent.toFixed(1)}%)</span>
+                        </div>
+                        <div class="progress-bar"><div class="progress-fill ${cpuBar.cls}" style="width: ${cpuBar.val}%"></div></div>
+                    </div>
+                    <div class="progress-row">
+                        <div class="label">
+                            <span>🗄 Database hajmi (kino_bot)</span>
+                            <span class="value">${fmtSize(s.database.sizeBytes)}</span>
+                        </div>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-3); margin-top: 4px;">
+                        ⏱ Server uptime: ${fmtUptime(s.uptime)} · 🖥 ${s.hostname} (${s.platform})
+                    </div>
+                </div>
+            `;
+        }
+
+        function setFilter(f) {
+            currentFilter = f;
+            document.querySelectorAll('.pill').forEach((p) => {
+                p.classList.toggle('active', p.dataset.filter === f);
             });
-        });
-
-        function toast(msg, type = 'success') {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.className = `toast ${type}`;
-            t.style.display = 'block';
-            setTimeout(() => { t.style.display = 'none'; }, 3000);
+            renderBots();
         }
 
-        function headers() {
-            if (adminToken) {
-                return { 'Content-Type': 'application/json', 'x-admin-token': adminToken };
-            }
-            return { 'Content-Type': 'application/json', 'x-telegram-id': myTgId };
-        }
+        function renderBots() {
+            const list = document.getElementById('botsList');
+            const search = (document.getElementById('searchInput')?.value || '').toLowerCase();
 
-        async function loadBots() {
-            try {
-                const res = await fetch(API, { headers: headers() });
-                if (res.status === 401) {
-                    adminToken = null;
-                    localStorage.removeItem('sa_token');
-                    document.getElementById('loginOverlay').style.display = 'flex';
-                    return;
+            const filtered = bots.filter((b) => {
+                if (currentFilter === 'expiring' && !(b.is_active && !b.is_expired && b.days_left <= 7)) return false;
+                if (currentFilter !== 'all' && currentFilter !== 'expiring' && b.status !== currentFilter) return false;
+                if (search) {
+                    const haystack = [b.name, b.username, b.owner_username, b.owner_full_name, b.owner_telegram_id, b.notes].filter(Boolean).join(' ').toLowerCase();
+                    if (!haystack.includes(search)) return false;
                 }
-                const j = await res.json();
-                if (!j.success) { toast(j.message || 'Xato', 'error'); return; }
-                renderBots(j.data);
-            } catch (e) {
-                toast('Server xatoligi', 'error');
-                console.error(e);
+                return true;
+            });
+
+            document.getElementById('botsCount').textContent = bots.length;
+
+            if (!filtered.length) {
+                list.innerHTML = '<div class="empty">Bot topilmadi</div>';
+                return;
             }
+
+            list.innerHTML = filtered.map((b) => {
+                const d = b._details;
+                const initial = (b.name || b.username || '?').charAt(0).toUpperCase();
+                const avatar = `<img src="${b.photo_url}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'" alt="">`;
+                return `
+                    <div class="bot-card" onclick="openBotModal(${b.id})">
+                        <div class="bot-row">
+                            <div class="bot-avatar">${avatar}</div>
+                            <div class="bot-info">
+                                <div class="bot-name">
+                                    ${escape(b.name)} ${statusBadge(b)}
+                                </div>
+                                <div class="bot-username">${b.username ? '@' + b.username : '<span style="color: var(--text-3)">username yo\\'q</span>'}</div>
+                                <div class="bot-meta">
+                                    <span class="chip">👤 ${b.owner_full_name || b.owner_username ? (b.owner_full_name ? escape(b.owner_full_name) : '@'+b.owner_username) : 'Egasi belgilanmagan'}</span>
+                                    ${b.owner_telegram_id ? '<span class="chip">🆔 ' + b.owner_telegram_id + '</span>' : ''}
+                                    <span class="chip">⏳ ${b.days_left} kun qoldi</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bot-stats">
+                            <span class="stat-mini">👥 <span class="num">${d ? formatNum(d.counts.users_total) : '—'}</span> user</span>
+                            <span class="stat-mini">🎬 <span class="num">${d ? formatNum(d.counts.movies_total) : '—'}</span> kino</span>
+                            <span class="stat-mini">⭐ <span class="num">${d ? d.counts.movies_premiere : '—'}</span> premyera</span>
+                            <span class="stat-mini">📺 <span class="num">${d ? d.counts.channels_active : '—'}</span> kanal</span>
+                            <span class="stat-mini">👁 <span class="num">${d ? formatNum(d.counts.views_total) : '—'}</span> ko'rish</span>
+                        </div>
+                        <div class="bot-actions" onclick="event.stopPropagation()">
+                            <button class="btn btn-sm btn-secondary" onclick="extend(${b.id}, 7)">+7 kun</button>
+                            <button class="btn btn-sm btn-secondary" onclick="extend(${b.id}, 30)">+30 kun</button>
+                            <button class="btn btn-sm btn-secondary" onclick="extend(${b.id}, 90)">+90 kun</button>
+                            <button class="btn btn-sm btn-secondary" onclick="extendCustom(${b.id})">⌨️</button>
+                            ${b.is_active
+                                ? '<button class="btn btn-sm btn-warn" onclick="setActive(' + b.id + ', false)">⏸ Pauza</button>'
+                                : '<button class="btn btn-sm btn-success" onclick="setActive(' + b.id + ', true)">▶️ Yoqish</button>'}
+                            <button class="btn btn-sm btn-secondary" onclick="restart(${b.id})">🔄 Restart</button>
+                            <a class="btn btn-sm btn-primary" href="/webapp/admin/?bot=${b.id}" target="_blank" style="text-decoration:none">🔗 Boshqarish</a>
+                            <button class="btn btn-sm btn-danger" onclick="removeBot(${b.id})">🗑</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function statusBadge(b) {
             if (!b.is_active) return '<span class="badge badge-paused">⏸ Pauza</span>';
             if (b.is_expired) return '<span class="badge badge-expired">❌ Tugagan</span>';
+            if (!b.is_running) return '<span class="badge badge-offline">⚪ Offline</span>';
+            if (b.days_left <= 7) return '<span class="badge badge-warning">⚠️ ' + b.days_left + ' kun</span>';
             return '<span class="badge badge-active">🟢 Faol</span>';
         }
 
-        function renderBots(bots) {
-            const list = document.getElementById('botsList');
-            if (!bots.length) { list.innerHTML = '<div class="empty">Hali bot qo\'shilmagan</div>'; return; }
+        // ========== MODAL ==========
+        async function openBotModal(id) {
+            const modal = document.getElementById('botModal');
+            modal.classList.add('active');
+            document.getElementById('modalTitle').innerHTML = 'Yuklanmoqda...';
+            document.getElementById('modalBody').innerHTML = '<div class="empty">Yuklanmoqda...</div>';
 
-            list.innerHTML = bots.map(b => `
-                <div style="padding:12px 0; border-bottom:1px solid #243043;">
-                    <div class="bot-name">${escape(b.name)} ${statusBadge(b)}</div>
-                    <div class="bot-meta">
-                        ${b.username ? '@' + escape(b.username) + ' · ' : ''}
-                        Token: <code>${escape(b.token_masked)}</code><br>
-                        Egasi: <code>${b.owner_telegram_id}</code><br>
-                        Muddat: <b>${new Date(b.expires_at).toLocaleString('uz-UZ')}</b>
-                        (${b.days_left} kun qoldi)<br>
-                        ${b.notes ? '📝 ' + escape(b.notes) + '<br>' : ''}
-                        <a class="open-link" href="/webapp/admin/?bot=${b.id}" target="_blank">🔗 Bu botning admin paneli</a>
+            try {
+                const [det, mov, usr, ch] = await Promise.all([
+                    fetch(API + '/bots/' + id + '/details', { headers: headers() }).then(r => r.json()),
+                    fetch(API + '/bots/' + id + '/movies?limit=15', { headers: headers() }).then(r => r.json()),
+                    fetch(API + '/bots/' + id + '/users?limit=20', { headers: headers() }).then(r => r.json()),
+                    fetch(API + '/bots/' + id + '/channels', { headers: headers() }).then(r => r.json()),
+                ]);
+                renderModal(det.data, mov.data || [], usr.data || [], ch.data || []);
+            } catch (e) {
+                document.getElementById('modalBody').innerHTML = '<div class="empty">Xato</div>';
+            }
+        }
+
+        function renderModal(d, movies, users, channels) {
+            const b = d.bot;
+            const initial = (b.name || '?').charAt(0).toUpperCase();
+            document.getElementById('modalTitle').innerHTML = `
+                <div class="bot-avatar" style="width:40px;height:40px;font-size:18px"><img src="${b.photo_url}" onerror="this.style.display='none';this.parentElement.textContent='${initial}'" alt=""></div>
+                <div>
+                    <div>${escape(b.name)} ${statusBadge(b)}</div>
+                    <div style="font-size:12px;color:var(--text-3);font-weight:500">@${b.username || '...'}</div>
+                </div>
+            `;
+
+            const tabs = `
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab(event,'overview')">📊 Umumiy</div>
+                    <div class="tab" onclick="switchTab(event,'movies')">🎬 Kinolar (${movies.length})</div>
+                    <div class="tab" onclick="switchTab(event,'users')">👥 Userlar (${users.length})</div>
+                    <div class="tab" onclick="switchTab(event,'channels')">📺 Kanallar (${channels.length})</div>
+                    <div class="tab" onclick="switchTab(event,'edit')">✏️ Tahrirlash</div>
+                </div>
+            `;
+
+            const overview = `
+                <div class="tab-content active" id="tab-overview">
+                    <div class="detail-grid">
+                        <div class="detail-row"><div class="detail-label">👥 Userlar</div><div class="detail-value">${formatNum(d.counts.users_total)} <span style="color:#34d399;font-size:12px">+${d.counts.users_today} bugun</span></div></div>
+                        <div class="detail-row"><div class="detail-label">🎬 Kinolar</div><div class="detail-value">${formatNum(d.counts.movies_total)} <span style="color:var(--text-3);font-size:12px">${d.counts.movies_premiere} premyera</span></div></div>
+                        <div class="detail-row"><div class="detail-label">📺 Kanallar</div><div class="detail-value">${d.counts.channels_active} <span style="color:var(--text-3);font-size:12px">/${d.counts.channels_total}</span></div></div>
+                        <div class="detail-row"><div class="detail-label">👁 Ko'rishlar</div><div class="detail-value">${formatNum(d.counts.views_total)} <span style="color:#34d399;font-size:12px">+${d.counts.views_today} bugun</span></div></div>
+                        <div class="detail-row"><div class="detail-label">📅 Yaratilgan</div><div class="detail-value">${fmtDate(b.created_at)}</div></div>
+                        <div class="detail-row"><div class="detail-label">⏳ Muddat</div><div class="detail-value">${fmtDate(b.expires_at)} <span style="color:var(--text-3);font-size:12px">(${b.days_left} kun)</span></div></div>
+                        <div class="detail-row"><div class="detail-label">🔑 Token</div><div class="detail-value"><code>${b.token_masked}</code></div></div>
+                        <div class="detail-row"><div class="detail-label">🆔 Egasi</div><div class="detail-value">${b.owner_telegram_id || '—'}${b.owner_username ? ' · @' + b.owner_username : ''}</div></div>
+                        ${d.last_movie ? `<div class="detail-row"><div class="detail-label">🎬 Oxirgi kino</div><div class="detail-value">${escape(d.last_movie.title)} <span style="color:var(--text-3);font-size:12px">${fmtRel(d.last_movie.created_at)}</span></div></div>` : ''}
+                        ${d.last_user ? `<div class="detail-row"><div class="detail-label">👤 Oxirgi user</div><div class="detail-value">${escape(d.last_user.full_name || ('user_'+d.last_user.telegram_id))} <span style="color:var(--text-3);font-size:12px">${fmtRel(d.last_user.created_at)}</span></div></div>` : ''}
                     </div>
-                    <div class="btn-row">
-                        <div class="ext-btns">
-                            <button class="btn btn-sm" onclick="extend(${b.id}, 7)">+7 kun</button>
-                            <button class="btn btn-sm" onclick="extend(${b.id}, 30)">+30 kun</button>
-                            <button class="btn btn-sm" onclick="extend(${b.id}, 90)">+90 kun</button>
-                            <button class="btn btn-sm" onclick="extendCustom(${b.id})">⌨️ Qo'shimcha</button>
+                    ${b.notes ? `<div class="detail-row"><div class="detail-label">📝 Eslatma</div><div class="detail-value">${escape(b.notes)}</div></div>` : ''}
+                </div>
+            `;
+
+            const moviesTab = `
+                <div class="tab-content" id="tab-movies">
+                    ${movies.length === 0 ? '<div class="empty">Hali kino qo\\'shilmagan</div>' :
+                    movies.map(m => `
+                        <div class="list-item">
+                            <div class="thumb">${m.thumbnail_file_id ? '<img src="/api/photo/thumbnail/'+m.thumbnail_file_id+'?bot='+b.id+'" onerror="this.style.display=\\'none\\';this.parentElement.textContent=\\'🎬\\'">' : '🎬'}</div>
+                            <div class="body">
+                                <div class="row1">
+                                    <span class="code-tag">${m.code}</span>
+                                    <span>${escape(m.title)}</span>
+                                    ${m.is_premiere ? '<span class="badge badge-warning">⭐ Premyera</span>' : ''}
+                                </div>
+                                <div class="row2">
+                                    👁 ${formatNum(m.views_count)} · 📁 ${m.file_type} · ${fmtRel(m.created_at)}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            const usersTab = `
+                <div class="tab-content" id="tab-users">
+                    ${users.length === 0 ? '<div class="empty">Hali user yo\\'q</div>' :
+                    users.map(u => `
+                        <div class="list-item">
+                            <div class="thumb"><img src="/api/photo/user/${u.telegram_id}?bot=${b.id}" onerror="this.style.display='none';this.parentElement.textContent='👤'"></div>
+                            <div class="body">
+                                <div class="row1">
+                                    ${escape(u.full_name || ('user_'+u.telegram_id))}
+                                    ${u.is_subscribed ? '<span class="badge badge-active">✅</span>' : ''}
+                                    ${u.is_banned ? '<span class="badge badge-expired">🚫 Block</span>' : ''}
+                                </div>
+                                <div class="row2">
+                                    🆔 ${u.telegram_id}${u.username ? ' · @' + u.username : ''} · ${fmtRel(u.created_at)}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            const channelsTab = `
+                <div class="tab-content" id="tab-channels">
+                    ${channels.length === 0 ? '<div class="empty">Hali kanal qo\\'shilmagan</div>' :
+                    channels.map(c => `
+                        <div class="list-item">
+                            <div class="thumb">📺</div>
+                            <div class="body">
+                                <div class="row1">${escape(c.channel_title || c.channel_username || c.channel_id)}</div>
+                                <div class="row2">
+                                    ${c.channel_username ? '@'+c.channel_username : c.channel_id}
+                                    · ${c.is_active ? '<span style="color:#34d399">aktiv</span>' : '<span style="color:#fca5a5">o\\'chirilgan</span>'}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            const editTab = `
+                <div class="tab-content" id="tab-edit">
+                    <div class="form-grid">
+                        <div class="full">
+                            <label class="field">Bot nomi</label>
+                            <input type="text" id="ed-name" value="${escape(b.name || '')}">
+                        </div>
+                        <div>
+                            <label class="field">Egasi Telegram ID</label>
+                            <input type="number" id="ed-owner-id" value="${b.owner_telegram_id || ''}">
+                        </div>
+                        <div>
+                            <label class="field">Egasi @username</label>
+                            <input type="text" id="ed-owner-username" value="${b.owner_username || ''}">
+                        </div>
+                        <div class="full">
+                            <label class="field">Egasi ismi</label>
+                            <input type="text" id="ed-owner-name" value="${escape(b.owner_full_name || '')}">
+                        </div>
+                        <div class="full">
+                            <label class="field">Eslatma</label>
+                            <textarea id="ed-notes" rows="3">${escape(b.notes || '')}</textarea>
+                        </div>
+                        <div class="full">
+                            <button class="btn btn-primary btn-lg" onclick="saveBotEdit(${b.id})">💾 Saqlash</button>
+                        </div>
+                        <div class="full">
+                            <label class="field">Tokenni o'zgartirish</label>
+                            <div style="display:flex;gap:8px">
+                                <input type="text" id="ed-token" placeholder="Yangi token (avtomatik restart)">
+                                <button class="btn btn-warn" onclick="changeToken(${b.id})">🔑</button>
+                            </div>
                         </div>
                     </div>
-                    <div class="btn-row">
-                        ${b.is_active
-                          ? `<button class="btn btn-sm btn-warn" onclick="setActive(${b.id}, false)">⏸ Pauza</button>`
-                          : `<button class="btn btn-sm btn-success" onclick="setActive(${b.id}, true)">▶️ Faollashtirish</button>`}
-                        <button class="btn btn-sm" onclick="restart(${b.id})">🔄 Restart</button>
-                        <button class="btn btn-sm" onclick="changeToken(${b.id})">🔑 Token o'zgartirish</button>
-                        <button class="btn btn-sm btn-danger" onclick="removeBot(${b.id})">🗑 O'chirish</button>
-                    </div>
                 </div>
-            `).join('');
+            `;
+
+            document.getElementById('modalBody').innerHTML = tabs + overview + moviesTab + usersTab + channelsTab + editTab;
         }
 
-        function escape(s) {
-            if (!s) return '';
-            return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        function switchTab(e, name) {
+            document.querySelectorAll('.modal .tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.modal .tab-content').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+            document.getElementById('tab-' + name).classList.add('active');
         }
 
+        function closeModal() {
+            document.getElementById('botModal').classList.remove('active');
+        }
+
+        // ========== ACTIONS ==========
         async function createBot() {
-            const token = document.getElementById('newToken').value.trim();
-            const name = document.getElementById('newName').value.trim();
-            const owner = parseInt(document.getElementById('newOwner').value);
-            const days = parseInt(document.getElementById('newDays').value) || 31;
-            const notes = document.getElementById('newNotes').value.trim();
-            if (!token || !name || !owner) { toast('Barcha asosiy maydonlarni to\'ldiring', 'error'); return; }
-
-            const res = await fetch(API, {
-                method: 'POST',
-                headers: headers(),
-                body: JSON.stringify({ token, name, owner_telegram_id: owner, duration_days: days, notes }),
-            });
+            const data = {
+                token: document.getElementById('newToken').value.trim(),
+                name: document.getElementById('newName').value.trim(),
+                owner_telegram_id: parseInt(document.getElementById('newOwnerId').value) || undefined,
+                owner_username: document.getElementById('newOwnerUsername').value.trim() || undefined,
+                owner_full_name: document.getElementById('newOwnerFullName').value.trim() || undefined,
+                duration_days: parseInt(document.getElementById('newDays').value) || 31,
+                notes: document.getElementById('newNotes').value.trim() || undefined,
+            };
+            if (!data.token || !data.name) { toast('Token va nomni kiriting', 'error'); return; }
+            const res = await fetch(API + '/bots', { method: 'POST', headers: headers(), body: JSON.stringify(data) });
             const j = await res.json();
             if (j.success) {
                 toast('✅ Bot qo\'shildi va ishga tushirildi');
-                document.getElementById('newToken').value = '';
-                document.getElementById('newName').value = '';
-                document.getElementById('newOwner').value = '';
-                document.getElementById('newNotes').value = '';
-                loadBots();
+                ['newToken','newName','newOwnerId','newOwnerUsername','newOwnerFullName','newNotes'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('newDays').value = 31;
+                loadBots(); loadOverview();
             } else {
                 toast(j.message || 'Xato', 'error');
             }
         }
 
         async function extend(id, days) {
-            const res = await fetch(`${API}/${id}/extend`, {
-                method: 'POST',
-                headers: headers(),
-                body: JSON.stringify({ days }),
-            });
+            const res = await fetch(API + '/bots/' + id + '/extend', { method: 'POST', headers: headers(), body: JSON.stringify({ days }) });
             const j = await res.json();
-            if (j.success) { toast(`+${days} kun qo\'shildi`); loadBots(); }
+            if (j.success) { toast('+' + days + ' kun qo\'shildi'); loadBots(); loadOverview(); }
             else toast(j.message || 'Xato', 'error');
         }
-
         async function extendCustom(id) {
-            const days = prompt('Necha kun qo\'shamiz?', '30');
+            const days = prompt('Necha kun?', '30');
             if (!days) return;
             const n = parseInt(days);
-            if (!n || n < 1) return;
-            await extend(id, n);
+            if (n > 0) extend(id, n);
         }
-
-        async function setActive(id, active) {
-            const res = await fetch(`${API}/${id}/active`, {
-                method: 'PATCH',
-                headers: headers(),
-                body: JSON.stringify({ is_active: active }),
-            });
+        async function setActive(id, val) {
+            const res = await fetch(API + '/bots/' + id + '/active', { method: 'PATCH', headers: headers(), body: JSON.stringify({ is_active: val }) });
             const j = await res.json();
-            if (j.success) { toast(active ? '▶️ Faollashtirildi' : '⏸ Pauza qilindi'); loadBots(); }
+            if (j.success) { toast(val ? '▶️ Yoqildi' : '⏸ Pauza qilindi'); loadBots(); }
             else toast(j.message || 'Xato', 'error');
         }
-
         async function restart(id) {
-            const res = await fetch(`${API}/${id}/restart`, { method: 'POST', headers: headers() });
+            const res = await fetch(API + '/bots/' + id + '/restart', { method: 'POST', headers: headers() });
             const j = await res.json();
             if (j.success) toast('🔄 Restart qilindi');
             else toast(j.message || 'Xato', 'error');
         }
-
         async function changeToken(id) {
-            const token = prompt('Yangi tokenni kiriting:');
-            if (!token) return;
-            const res = await fetch(`${API}/${id}`, {
-                method: 'PUT',
-                headers: headers(),
-                body: JSON.stringify({ token }),
-            });
+            const token = document.getElementById('ed-token').value.trim();
+            if (!token) return toast('Token bo\'sh', 'error');
+            const res = await fetch(API + '/bots/' + id, { method: 'PUT', headers: headers(), body: JSON.stringify({ token }) });
             const j = await res.json();
-            if (j.success) { toast('🔑 Token yangilandi va bot qayta ishga tushirildi'); loadBots(); }
+            if (j.success) { toast('🔑 Token yangilandi'); closeModal(); loadBots(); }
             else toast(j.message || 'Xato', 'error');
         }
-
+        async function saveBotEdit(id) {
+            const data = {
+                name: document.getElementById('ed-name').value.trim(),
+                owner_telegram_id: parseInt(document.getElementById('ed-owner-id').value) || null,
+                owner_username: document.getElementById('ed-owner-username').value.trim(),
+                owner_full_name: document.getElementById('ed-owner-name').value.trim(),
+                notes: document.getElementById('ed-notes').value.trim(),
+            };
+            const res = await fetch(API + '/bots/' + id, { method: 'PUT', headers: headers(), body: JSON.stringify(data) });
+            const j = await res.json();
+            if (j.success) { toast('💾 Saqlandi'); loadBots(); openBotModal(id); }
+            else toast(j.message || 'Xato', 'error');
+        }
         async function removeBot(id) {
-            if (!confirm('Bu botni butunlay o\'chirasizmi? (Kontent ham o\'chiriladi)')) return;
-            const res = await fetch(`${API}/${id}`, { method: 'DELETE', headers: headers() });
+            if (!confirm('Botni va uning ma\'lumotlarini butunlay o\'chirasizmi?')) return;
+            const res = await fetch(API + '/bots/' + id, { method: 'DELETE', headers: headers() });
             const j = await res.json();
-            if (j.success) { toast('🗑 O\'chirildi'); loadBots(); }
+            if (j.success) { toast('🗑 O\'chirildi'); loadBots(); loadOverview(); }
             else toast(j.message || 'Xato', 'error');
         }
 
-        // Init
+        // ========== HELPERS ==========
+        function escape(s) {
+            if (s == null) return '';
+            return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+        function formatNum(n) {
+            if (n == null) return '0';
+            if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+            if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+            return String(n);
+        }
+        function fmtSize(b) {
+            if (!b) return '0 B';
+            const u = ['B','KB','MB','GB','TB'];
+            let i = 0;
+            while (b >= 1024 && i < u.length-1) { b /= 1024; i++; }
+            return b.toFixed(b < 10 ? 1 : 0) + ' ' + u[i];
+        }
+        function pct(p) {
+            const val = Math.min(100, Math.max(0, p));
+            const cls = val >= 85 ? 'crit' : val >= 65 ? 'warn' : '';
+            return { val, cls };
+        }
+        function fmtUptime(sec) {
+            const d = Math.floor(sec / 86400);
+            const h = Math.floor((sec % 86400) / 3600);
+            const m = Math.floor((sec % 3600) / 60);
+            return (d > 0 ? d + 'k ' : '') + h + 's ' + m + 'd';
+        }
+        function fmtDate(s) {
+            if (!s) return '—';
+            return new Date(s).toLocaleDateString('uz-UZ', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+        function fmtRel(s) {
+            if (!s) return '';
+            const diff = (Date.now() - new Date(s).getTime()) / 1000;
+            if (diff < 60) return 'hozir';
+            if (diff < 3600) return Math.floor(diff/60) + ' daq oldin';
+            if (diff < 86400) return Math.floor(diff/3600) + ' soat oldin';
+            if (diff < 86400 * 30) return Math.floor(diff/86400) + ' kun oldin';
+            return new Date(s).toLocaleDateString('uz-UZ');
+        }
+
+        // ========== START ==========
         if (adminToken || myTgId) {
             document.getElementById('loginOverlay').style.display = 'none';
-            loadBots();
+            init();
         }
     </script>
 </body>

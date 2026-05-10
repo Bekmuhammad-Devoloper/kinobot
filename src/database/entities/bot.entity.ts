@@ -17,6 +17,18 @@ export class Bot {
   @Column({ type: 'bigint' })
   owner_telegram_id: number;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  owner_username: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  owner_full_name: string;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  photo_file_id: string;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  description: string;
+
   @Column({ type: 'timestamp' })
   expires_at: Date;
 

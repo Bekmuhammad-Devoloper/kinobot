@@ -1,5 +1,8 @@
 import { Controller, Get, Param, Query, Res, Header } from '@nestjs/common';
 import { Response } from 'express';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Bot as BotEntity } from '../database/entities';
 import { TelegramService } from './telegram.service';
 import { BotManagerService } from '../bots/bot-manager.service';
 
@@ -8,7 +11,47 @@ export class PhotoProxyController {
   constructor(
     private readonly telegramService: TelegramService,
     private readonly botManager: BotManagerService,
+    @InjectRepository(BotEntity) private readonly botRepo: Repository<BotEntity>,
   ) {}
+
+  @Get('bot/:botId')
+  @Header('Cache-Control', 'public, max-age=3600')
+  async getBotPhoto(
+    @Param('botId') botId: string,
+    @Res() res: Response,
+  ) {
+    try {
+      const id = parseInt(botId);
+      const bot = await this.botRepo.findOne({ where: { id } });
+      if (!bot) return res.status(404).json({ error: 'Bot topilmadi' });
+
+      const tg = this.botManager.getTelegraf(id);
+      if (!tg) return res.status(503).json({ error: 'Bot offline' });
+
+      // Saqlangan photo_file_id bor bo'lsa, undan yuklaymiz
+      if (bot.photo_file_id) {
+        const buf = await this.telegramService.getFileBuffer(tg, bot.photo_file_id);
+        if (buf) {
+          res.set('Content-Type', 'image/jpeg');
+          return res.send(buf);
+        }
+      }
+
+      // Aks holda getChat orqali tortib olamiz
+      if (bot.username) {
+        const buf = await this.telegramService.getChannelPhotoBuffer(tg, `@${bot.username}`);
+        if (buf) {
+          res.set('Content-Type', 'image/jpeg');
+          return res.send(buf);
+        }
+      }
+
+      res.status(404).json({ error: 'Photo not found' });
+    } catch (error) {
+      console.error('Error getting bot photo:', error);
+      res.status(500).json({ error: 'Failed to get photo' });
+    }
+  }
 
   private resolveTg(botIdStr?: string) {
     const botId = botIdStr ? parseInt(botIdStr) : undefined;

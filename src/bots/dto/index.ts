@@ -9,8 +9,17 @@ export class CreateBotDto {
   @MinLength(1)
   name: string;
 
+  @IsOptional()
   @IsInt()
-  owner_telegram_id: number;
+  owner_telegram_id?: number;
+
+  @IsOptional()
+  @IsString()
+  owner_username?: string;
+
+  @IsOptional()
+  @IsString()
+  owner_full_name?: string;
 
   @IsOptional()
   @IsInt()
@@ -36,6 +45,14 @@ export class UpdateBotDto {
   @IsOptional()
   @IsInt()
   owner_telegram_id?: number;
+
+  @IsOptional()
+  @IsString()
+  owner_username?: string;
+
+  @IsOptional()
+  @IsString()
+  owner_full_name?: string;
 
   @IsOptional()
   @IsBoolean()

@@ -108,8 +108,38 @@ export class BotManagerService implements OnModuleInit, OnModuleDestroy {
     // Try to fetch bot info & set username
     try {
       const me = await tg.telegram.getMe();
+      const updates: Partial<BotEntity> = {};
       if (me?.username && bot.username !== me.username) {
-        await this.botRepo.update(bot.id, { username: me.username });
+        updates.username = me.username;
+      }
+
+      // Bot'ning chat ma'lumotlarini olib, profil rasmini yangilaymiz
+      try {
+        const chat: any = await tg.telegram.getChat(`@${me.username}`);
+        if (chat?.photo?.big_file_id && bot.photo_file_id !== chat.photo.big_file_id) {
+          updates.photo_file_id = chat.photo.big_file_id;
+        }
+        if (chat?.description && bot.description !== chat.description) {
+          updates.description = chat.description;
+        }
+      } catch {}
+
+      // Egasining ma'lumotlarini yangilaymiz (agar telegram_id bor bo'lsa)
+      if (bot.owner_telegram_id) {
+        try {
+          const ownerChat: any = await tg.telegram.getChat(Number(bot.owner_telegram_id));
+          const fullName = [ownerChat.first_name, ownerChat.last_name].filter(Boolean).join(' ').trim();
+          if (ownerChat?.username && bot.owner_username !== ownerChat.username) {
+            updates.owner_username = ownerChat.username;
+          }
+          if (fullName && bot.owner_full_name !== fullName) {
+            updates.owner_full_name = fullName;
+          }
+        } catch {}
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await this.botRepo.update(bot.id, updates);
       }
     } catch (e) {
       this.logger.error(`Bot ${bot.id} getMe failed: ${e?.message || e}`);
