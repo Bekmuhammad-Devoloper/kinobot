@@ -795,7 +795,7 @@
                                 <div class="bot-name">
                                     ${escape(b.name)} ${statusBadge(b)}
                                 </div>
-                                <div class="bot-username">${b.username ? '@' + b.username : '<span style="color: var(--text-3)">username yo\\'q</span>'}</div>
+                                <div class="bot-username">${b.username ? '@' + b.username : '<span style="color: var(--text-3)">username yo&apos;q</span>'}</div>
                                 <div class="bot-meta">
                                     <span class="chip">👤 ${b.owner_full_name || b.owner_username ? (b.owner_full_name ? escape(b.owner_full_name) : '@'+b.owner_username) : 'Egasi belgilanmagan'}</span>
                                     ${b.owner_telegram_id ? '<span class="chip">🆔 ' + b.owner_telegram_id + '</span>' : ''}
@@ -896,10 +896,10 @@
 
             const moviesTab = `
                 <div class="tab-content" id="tab-movies">
-                    ${movies.length === 0 ? '<div class="empty">Hali kino qo\\'shilmagan</div>' :
+                    ${movies.length === 0 ? '<div class="empty">Hali kino qo&apos;shilmagan</div>' :
                     movies.map(m => `
                         <div class="list-item">
-                            <div class="thumb">${m.thumbnail_file_id ? '<img src="/api/photo/thumbnail/'+m.thumbnail_file_id+'?bot='+b.id+'" onerror="this.style.display=\\'none\\';this.parentElement.textContent=\\'🎬\\'">' : '🎬'}</div>
+                            <div class="thumb">${m.thumbnail_file_id ? '<img src="/api/photo/thumbnail/'+m.thumbnail_file_id+'?bot='+b.id+'" onerror="this.style.display=&quot;none&quot;;this.parentElement.textContent=&quot;🎬&quot;">' : '🎬'}</div>
                             <div class="body">
                                 <div class="row1">
                                     <span class="code-tag">${m.code}</span>
@@ -917,7 +917,7 @@
 
             const usersTab = `
                 <div class="tab-content" id="tab-users">
-                    ${users.length === 0 ? '<div class="empty">Hali user yo\\'q</div>' :
+                    ${users.length === 0 ? '<div class="empty">Hali user yo&apos;q</div>' :
                     users.map(u => `
                         <div class="list-item">
                             <div class="thumb"><img src="/api/photo/user/${u.telegram_id}?bot=${b.id}" onerror="this.style.display='none';this.parentElement.textContent='👤'"></div>
@@ -938,7 +938,7 @@
 
             const channelsTab = `
                 <div class="tab-content" id="tab-channels">
-                    ${channels.length === 0 ? '<div class="empty">Hali kanal qo\\'shilmagan</div>' :
+                    ${channels.length === 0 ? '<div class="empty">Hali kanal qo&apos;shilmagan</div>' :
                     channels.map(c => `
                         <div class="list-item">
                             <div class="thumb">📺</div>
@@ -946,7 +946,7 @@
                                 <div class="row1">${escape(c.channel_title || c.channel_username || c.channel_id)}</div>
                                 <div class="row2">
                                     ${c.channel_username ? '@'+c.channel_username : c.channel_id}
-                                    · ${c.is_active ? '<span style="color:#34d399">aktiv</span>' : '<span style="color:#fca5a5">o\\'chirilgan</span>'}
+                                    · ${c.is_active ? '<span style="color:#34d399">aktiv</span>' : '<span style="color:#fca5a5">o&apos;chirilgan</span>'}
                                 </div>
                             </div>
                         </div>
