@@ -108,10 +108,9 @@ export function registerBotHandlers(
       case 1:
         // Hali video kelmagan, lekin user matn yozib qo'ydi
         await ctx.reply(
-          '⚠️ *Hozir kino faylini kutyapman*\n\n' +
+          '⚠️ Hozir kino faylini kutyapman\n\n' +
           'Iltimos, video / animation / dumaloq video yoki document yuboring.\n\n' +
-          '_Boshidan boshlash uchun "❌ Bekor qilish" tugmasini bosing._',
-          { parse_mode: 'Markdown' }
+          'Boshidan boshlash uchun "❌ Bekor qilish" tugmasini bosing.'
         );
         break;
 
@@ -120,8 +119,7 @@ export function registerBotHandlers(
         if (!code || code.length < 2) {
           await ctx.reply(
             '❌ Kod juda qisqa.\n\n' +
-            'Kamida *2 belgi* bo\'lishi kerak. Misollar: `KN001`, `BARBIE`, `OPP24`',
-            { parse_mode: 'Markdown' }
+            'Kamida 2 belgi bo\'lishi kerak. Misollar: KN001, BARBIE, OPP24'
           );
           return;
         }
@@ -132,22 +130,21 @@ export function registerBotHandlers(
         const existing = await svc.getMovieByCode(botId, code);
         if (existing) {
           await ctx.reply(
-            `❌ Bu kod (\`${code}\`) bilan kino allaqachon mavjud!\n\n` +
-            'Boshqa kod kiriting 👇',
-            { parse_mode: 'Markdown' }
+            `❌ Bu kod (${code}) bilan kino allaqachon mavjud!\n\n` +
+            'Boshqa kod kiriting 👇'
           );
           return;
         }
         ctx.session.movieData.code = code;
         ctx.session.step = 3;
         await ctx.reply(
-          `✅ Kod saqlandi: \`${code}\` (3/5)\n` +
+          `✅ Kod saqlandi: ${code} (3/5)\n` +
           '━━━━━━━━━━━━━━━━━━\n\n' +
-          '🎬 *Uchinchi qadam:* kino *nomini* kiriting.\n\n' +
-          '_Bu nom foydalanuvchilarga ko\'rinadi va premyera ro\'yxatida chiqadi._\n\n' +
-          'Misol: `Barbie (2024)`\n\n' +
+          '🎬 Uchinchi qadam: kino nomini kiriting.\n\n' +
+          'Bu nom foydalanuvchilarga ko\'rinadi va premyera ro\'yxatida chiqadi.\n\n' +
+          'Misol: Barbie (2024)\n\n' +
           'Endi nomni yozing 👇',
-          { parse_mode: 'Markdown', ...AdminKeyboard.cancel() }
+          AdminKeyboard.cancel()
         );
         break;
       }
@@ -164,13 +161,13 @@ export function registerBotHandlers(
         ctx.session.movieData.title = text.trim();
         ctx.session.step = 4;
         await ctx.reply(
-          `✅ Nom saqlandi: *${text.trim()}* (4/5)\n` +
+          `✅ Nom saqlandi: ${text.trim()} (4/5)\n` +
           '━━━━━━━━━━━━━━━━━━\n\n' +
-          '📝 *To\'rtinchi qadam:* kino *tavsifi*.\n\n' +
-          '_Tavsif — janr, qisqa syujet yoki yil. Foydalanuvchi kino ustiga bossa shu matn ko\'rinadi._\n\n' +
-          'Misol: `🎭 Komediya, 2024-yil. Barbie haqiqiy dunyoga sayohat qiladi.`\n\n' +
+          '📝 To\'rtinchi qadam: kino tavsifi.\n\n' +
+          'Tavsif — janr, qisqa syujet yoki yil. Foydalanuvchi kino ustiga bossa shu matn ko\'rinadi.\n\n' +
+          'Misol: 🎭 Komediya, 2024-yil. Barbie haqiqiy dunyoga sayohat qiladi.\n\n' +
           '⏭ Tavsif kerak bo\'lmasa "O\'tkazib yuborish" tugmasini bosing.',
-          { parse_mode: 'Markdown', ...AdminKeyboard.skipOrCancel() }
+          AdminKeyboard.skipOrCancel()
         );
         break;
 
@@ -180,12 +177,12 @@ export function registerBotHandlers(
         }
         ctx.session.step = 5;
         await ctx.reply(
-          `✅ Tavsif ${text === '⏭ O\'tkazib yuborish' ? '_o\'tkazib yuborildi_' : 'saqlandi'} (5/5)\n` +
+          `✅ Tavsif ${text === '⏭ O\'tkazib yuborish' ? 'o\'tkazib yuborildi' : 'saqlandi'} (5/5)\n` +
           '━━━━━━━━━━━━━━━━━━\n\n' +
-          '⭐ *Oxirgi qadam:* premyera holati.\n\n' +
-          '_Premyera kinolar foydalanuvchilarga "🎬 Premyera Kinolar" bo\'limida birinchi ko\'rinadi. Bu yangi yoki mashhur kinolar uchun foydali._\n\n' +
+          '⭐ Oxirgi qadam: premyera holati.\n\n' +
+          'Premyera kinolar foydalanuvchilarga "🎬 Premyera Kinolar" bo\'limida birinchi ko\'rinadi. Bu yangi yoki mashhur kinolar uchun foydali.\n\n' +
           '👇 Tanlang:',
-          { parse_mode: 'Markdown', ...AdminKeyboard.yesNo() }
+          AdminKeyboard.yesNo()
         );
         break;
 
@@ -198,8 +195,8 @@ export function registerBotHandlers(
           ctx.session.movieData.is_premiere = false;
         } else {
           await ctx.reply(
-            '⚠️ Iltimos, faqat *"✅ Ha"* yoki *"❌ Yo\'q"* tugmasini bosing.',
-            { parse_mode: 'Markdown', ...AdminKeyboard.yesNo() }
+            '⚠️ Iltimos, faqat "✅ Ha" yoki "❌ Yo\'q" tugmasini bosing.',
+            AdminKeyboard.yesNo()
           );
           return;
         }
@@ -217,16 +214,16 @@ export function registerBotHandlers(
             ? `${Math.floor(movie.duration / 60)}:${String(movie.duration % 60).padStart(2, '0')}`
             : '—';
           await ctx.reply(
-            '🎉 *Kino muvaffaqiyatli yuklandi!*\n' +
+            '🎉 Kino muvaffaqiyatli yuklandi!\n' +
             '━━━━━━━━━━━━━━━━━━\n\n' +
-            `🔢 Kod:        \`${movie.code}\`\n` +
+            `🔢 Kod:        ${movie.code}\n` +
             `🎬 Nom:        ${movie.title}\n` +
-            `📁 Tur:        \`${movie.file_type}\`\n` +
-            `⏱ Davomiylik: \`${dur}\`\n` +
+            `📁 Tur:        ${movie.file_type}\n` +
+            `⏱ Davomiylik: ${dur}\n` +
             `⭐ Premyera:   ${movie.is_premiere ? '✅ Ha' : '❌ Yo\'q'}\n\n` +
-            `💡 _Endi foydalanuvchilar \`${movie.code}\` kodini yozib shu kinoni topa oladi._\n\n` +
+            `💡 Endi foydalanuvchilar ${movie.code} kodini yozib shu kinoni topa oladi.\n\n` +
             'Yana kino qo\'shish uchun "📤 Kino Yuklash"',
-            { parse_mode: 'Markdown', ...AdminKeyboard.mainMenu() }
+            AdminKeyboard.mainMenu()
           );
         } catch (e) {
           console.error('createMovie failed:', e);
@@ -376,17 +373,17 @@ export function registerBotHandlers(
     ctx.session.step = 1;
     ctx.session.movieData = {};
     await ctx.reply(
-      '🎬 *Kino yuklash boshlandi* (1/5)\n' +
+      '🎬 Kino yuklash boshlandi (1/5)\n' +
       '━━━━━━━━━━━━━━━━━━\n\n' +
-      '📥 *Birinchi qadam:* kino faylini menga yuboring.\n\n' +
+      '📥 Birinchi qadam: kino faylini menga yuboring.\n\n' +
       '✅ Qabul qilinadigan turlar:\n' +
-      '   • 🎥 Video\n' +
-      '   • 🎞 Animation (GIF)\n' +
-      '   • 🔵 Dumaloq video\n' +
-      '   • 📁 Document (.mp4, .mkv va h.k.)\n\n' +
-      '💡 _Maslahat: video-ni boshqa botdan yoki kanaldan ham forward qilishingiz mumkin._\n\n' +
+      '   🎥 Video\n' +
+      '   🎞 Animation (GIF)\n' +
+      '   🔵 Dumaloq video\n' +
+      '   📁 Document (.mp4, .mkv va h.k.)\n\n' +
+      '💡 Maslahat: video-ni boshqa botdan yoki kanaldan ham forward qilishingiz mumkin.\n\n' +
       'Tayyor bo\'lsangiz, faylni yuboring 👇',
-      { parse_mode: 'Markdown', ...AdminKeyboard.cancel() }
+      AdminKeyboard.cancel()
     );
   });
 
@@ -774,16 +771,16 @@ export function registerBotHandlers(
     const sizeMb = fileSize ? (fileSize / 1024 / 1024).toFixed(1) : '?';
     const dur = duration ? `${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}` : '—';
     await ctx.reply(
-      '✅ *Fayl qabul qilindi!* (2/5)\n' +
+      '✅ Fayl qabul qilindi! (2/5)\n' +
       '━━━━━━━━━━━━━━━━━━\n\n' +
-      `📁 Tur: \`${fileType}\`\n` +
-      `⏱ Davomiyligi: \`${dur}\`\n` +
-      `💾 Hajmi: \`${sizeMb} MB\`\n\n` +
-      '🔢 *Ikkinchi qadam:* kino uchun *unikal kod* kiriting.\n\n' +
-      '_Kod foydalanuvchilarga shu kinoni topishga yordam beradi. Bot orqali "Kod orqali ko\'rish" → kodni kiritish — kino chiqadi._\n\n' +
-      'Misollar: `KN001`, `FILM2024`, `BARBIE`\n\n' +
+      `📁 Tur: ${fileType}\n` +
+      `⏱ Davomiyligi: ${dur}\n` +
+      `💾 Hajmi: ${sizeMb} MB\n\n` +
+      '🔢 Ikkinchi qadam: kino uchun unikal kod kiriting.\n\n' +
+      'Kod foydalanuvchilarga shu kinoni topishga yordam beradi. Bot orqali "Kod orqali ko\'rish" → kodni kiritish — kino chiqadi.\n\n' +
+      'Misollar: KN001, FILM2024, BARBIE\n\n' +
       'Endi kodni yozing 👇',
-      { parse_mode: 'Markdown', ...AdminKeyboard.cancel() }
+      AdminKeyboard.cancel()
     );
     return true;
   }
