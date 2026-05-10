@@ -79,7 +79,17 @@ export class BotManagerService implements OnModuleInit, OnModuleDestroy {
       return next();
     });
 
-    tg.use(session() as any);
+    // In-memory session — telegraf v4'da default session() yangi user uchun
+    // ctx.session ni yaratmaydi, shuning uchun defaultSession factory beramiz.
+    tg.use(session({
+      defaultSession: () => ({} as any),
+    }) as any);
+
+    // Defensive fallback: agar baribir undefined bo'lsa, bo'sh obyektga aylantiramiz.
+    tg.use(async (ctx, next) => {
+      if (!(ctx as any).session) (ctx as any).session = {};
+      return next();
+    });
 
     const webAppUrl = this.configService.get('WEB_APP_URL', 'http://localhost:3000/webapp');
     const adminWebAppUrl = this.configService.get('ADMIN_WEB_APP_URL', 'http://localhost:3000/webapp/admin');
