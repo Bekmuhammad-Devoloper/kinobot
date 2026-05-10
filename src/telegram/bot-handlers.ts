@@ -737,6 +737,16 @@ export function registerBotHandlers(
       } else {
         await ctx.reply(caption, UserKeyboard.watchMovie(movie.code));
       }
+    } else {
+      // Kino topilmadi — foydalanuvchiga yo'l-yo'riq ko'rsat
+      await ctx.reply(
+        '🔍 Kino topilmadi!\n\n' +
+        `"${text.toUpperCase()}" kodi bilan kino mavjud emas.\n\n` +
+        '💡 Maslahat:\n' +
+        '• Kodni to\'g\'ri yozing (masalan: KN001)\n' +
+        '• "🔍 Kod orqali ko\'rish" tugmasini bosib kodni kiriting',
+        UserKeyboard.mainMenu(premiereWebApp)
+      );
     }
   });
 
@@ -780,7 +790,16 @@ export function registerBotHandlers(
 
   bot.on('video', async (ctx) => {
     const user = ctx.from;
-    if (!user || !(await isAdmin(user.id))) return;
+    if (!user) return;
+    if (!(await isAdmin(user.id))) {
+      await ctx.reply(
+        '🔍 Kino ko\'rish uchun kodni kiriting!\n\n' +
+        'Masalan: KN001, FILM2024\n\n' +
+        'Yoki "🔍 Kod orqali ko\'rish" tugmasini bosing.',
+        UserKeyboard.mainMenu(premiereWebApp)
+      );
+      return;
+    }
     const v = (ctx.message as Message.VideoMessage).video;
     const handled = await captureUploadMedia(ctx, v.file_id, 'video', v.duration, v.file_size, v.thumbnail?.file_id);
     if (!handled && ctx.session?.scene === 'upload_movie') {
@@ -790,7 +809,15 @@ export function registerBotHandlers(
 
   bot.on('animation', async (ctx) => {
     const user = ctx.from;
-    if (!user || !(await isAdmin(user.id))) return;
+    if (!user) return;
+    if (!(await isAdmin(user.id))) {
+      await ctx.reply(
+        '🔍 Kino ko\'rish uchun kodni kiriting!\n\n' +
+        'Masalan: KN001, FILM2024',
+        UserKeyboard.mainMenu(premiereWebApp)
+      );
+      return;
+    }
     const a = (ctx.message as any).animation;
     if (!a) return;
     await captureUploadMedia(ctx, a.file_id, 'animation', a.duration, a.file_size, a.thumbnail?.file_id);
@@ -798,7 +825,14 @@ export function registerBotHandlers(
 
   bot.on('video_note', async (ctx) => {
     const user = ctx.from;
-    if (!user || !(await isAdmin(user.id))) return;
+    if (!user) return;
+    if (!(await isAdmin(user.id))) {
+      await ctx.reply(
+        '🔍 Kino ko\'rish uchun kodni kiriting!',
+        UserKeyboard.mainMenu(premiereWebApp)
+      );
+      return;
+    }
     const vn = (ctx.message as any).video_note;
     if (!vn) return;
     await captureUploadMedia(ctx, vn.file_id, 'video_note', vn.duration, vn.file_size, vn.thumbnail?.file_id);
@@ -807,7 +841,14 @@ export function registerBotHandlers(
   // Document — agar mime_type video/* bo'lsa
   bot.on('document', async (ctx) => {
     const user = ctx.from;
-    if (!user || !(await isAdmin(user.id))) return;
+    if (!user) return;
+    if (!(await isAdmin(user.id))) {
+      await ctx.reply(
+        '🔍 Kino ko\'rish uchun kodni kiriting!',
+        UserKeyboard.mainMenu(premiereWebApp)
+      );
+      return;
+    }
     const doc = (ctx.message as any).document;
     if (!doc) return;
     if (ctx.session?.scene === 'upload_movie' && ctx.session?.step === 1) {
@@ -817,6 +858,11 @@ export function registerBotHandlers(
       } else {
         await ctx.reply('⚠️ Video fayl yuboring (video yoki .mp4 hujjat).');
       }
+    } else if (ctx.session?.scene !== 'upload_movie') {
+      await ctx.reply(
+        '🔍 Kino ko\'rish uchun kodni kiriting!',
+        AdminKeyboard.mainMenu()
+      );
     }
   });
 }
