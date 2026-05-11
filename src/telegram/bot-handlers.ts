@@ -7,7 +7,6 @@ export interface BotConfig {
   botId: number;
   webAppUrl: string;
   adminWebAppUrl: string;
-  contactUsername?: string;
 }
 
 export function registerBotHandlers(
@@ -16,7 +15,6 @@ export function registerBotHandlers(
   svc: TelegramService,
 ) {
   const { botId, webAppUrl, adminWebAppUrl } = cfg;
-  const contact = cfg.contactUsername || 'admin';
 
   // Telegram WebApp tugmalari faqat HTTPS URL bilan ishlaydi.
   // Lokal HTTP holatda WebApp tugmalari bermaymiz (oddiy keyboard ishlatamiz).
@@ -339,17 +337,18 @@ export function registerBotHandlers(
 
   // ============ HELP ============
   bot.hears('ℹ️ Yordam', async (ctx) => {
+    const ownerContact = await svc.getBotOwnerUsername(botId);
     await ctx.reply(
       'ℹ️ Yordam\n\n' +
       '🎬 Premyera Kinolar - Eng yangi kinolarni ko\'ring\n' +
       '🔍 Kod orqali ko\'rish - Kino kodini kiritib, kinoni toping\n' +
       '📊 Mening statistikam - O\'z statistikangizni ko\'ring\n\n' +
-      `📞 Savol va takliflar uchun: @${contact}`,
+      `📞 Savol va takliflar uchun: @${ownerContact}`,
       {
         parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [
-            [{ text: '📞 Admin bilan bog\'lanish', url: `https://t.me/${contact}` }]
+            [{ text: '📞 Admin bilan bog\'lanish', url: `https://t.me/${ownerContact}` }]
           ]
         }
       }

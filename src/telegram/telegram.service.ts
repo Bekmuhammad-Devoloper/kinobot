@@ -146,6 +146,11 @@ export class TelegramService {
     return !!admin;
   }
 
+  async getBotOwnerUsername(botId: number): Promise<string> {
+    const bot = await this.botRepo.findOne({ where: { id: botId } });
+    return bot?.owner_username || 'admin';
+  }
+
   async findOrCreateAdmin(botId: number, telegramId: number, username?: string, fullName?: string): Promise<Admin | null> {
     const bot = await this.botRepo.findOne({ where: { id: botId } });
     if (!bot || Number(bot.owner_telegram_id) !== Number(telegramId)) {

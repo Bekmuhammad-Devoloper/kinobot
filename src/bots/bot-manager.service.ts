@@ -98,7 +98,6 @@ export class BotManagerService implements OnModuleInit, OnModuleDestroy {
       botId: bot.id,
       webAppUrl,
       adminWebAppUrl,
-      contactUsername: 'Bobrr1234',
     }, this.telegramService);
 
     tg.catch((err) => {
