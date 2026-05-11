@@ -1301,6 +1301,14 @@ function headers() {
     return h;
 }
 
+// Bot ichidagi admin endpoint'lari uchun (movies/users/channels CRUD)
+function adminHeaders(botId) {
+    const h = { 'Content-Type': 'application/json', 'x-bot-id': String(botId) };
+    if (adminToken) h['x-admin-token'] = adminToken;
+    else if (myTgId) h['x-telegram-id'] = String(myTgId);
+    return h;
+}
+
 function toast(msg, type = 'success') {
     const t = document.getElementById('toast');
     const icon = type === 'error' ? I.xC : I.checkC;
@@ -1727,12 +1735,15 @@ function renderModal(d, movies, users, channels) {
     const moviesTab = `
         <div class="mtab-content" id="mtab-movies">
             ${movies.length === 0
-                ? '<div class="empty"><div class="ic-big">' + I.film + '</div><div class="text">Hali kino qo&apos;shilmagan</div></div>'
+                ? '<div class="empty"><div class="ic-big">' + I.film + '</div><div class="text">Hali kino qo&apos;shilmagan</div><div class="sub">Kinolarni bot orqali yuklang</div></div>'
                 : movies.map(m => {
                     const thumb = m.thumbnail_file_id
                         ? '<img src="/api/photo/thumbnail/' + m.thumbnail_file_id + '?bot=' + b.id + '" onerror="this.parentElement.innerHTML=&quot;' + escapeAttr(I.film) + '&quot;">'
                         : I.film;
-                    return '<div class="list-item">'
+                    const premiereBtn = m.is_premiere
+                        ? '<button class="btn btn-sm btn-icon-sm btn-warn" title="Premyeradan olib tashlash" onclick="adminTogglePremiere(' + b.id + ',' + m.id + ',false)">' + I.star + '</button>'
+                        : '<button class="btn btn-sm btn-icon-sm btn-secondary" title="Premyera qilish" onclick="adminTogglePremiere(' + b.id + ',' + m.id + ',true)">' + I.star + '</button>';
+                    return '<div class="list-item" style="align-items:center;gap:10px">'
                         + '<div class="thumb">' + thumb + '</div>'
                         + '<div class="body"><div class="row1">'
                         + '<span class="code-tag">' + m.code + '</span>'
@@ -1742,7 +1753,12 @@ function renderModal(d, movies, users, channels) {
                         + '<span>' + I.eye + formatNum(m.views_count) + '</span>'
                         + '<span>' + m.file_type + '</span>'
                         + '<span>' + fmtRel(m.created_at) + '</span>'
-                        + '</div></div></div>';
+                        + '</div></div>'
+                        + '<div style="display:flex;gap:6px;flex-shrink:0">'
+                        + premiereBtn
+                        + '<button class="btn btn-sm btn-icon-sm btn-danger" title="O&apos;chirish" onclick="adminDeleteMovie(' + b.id + ',' + m.id + ')">' + I.trash + '</button>'
+                        + '</div>'
+                        + '</div>';
                 }).join('')
             }
         </div>
@@ -1753,7 +1769,10 @@ function renderModal(d, movies, users, channels) {
             ${users.length === 0
                 ? '<div class="empty"><div class="ic-big">' + I.users + '</div><div class="text">Hali user yo&apos;q</div></div>'
                 : users.map(u => {
-                    return '<div class="list-item">'
+                    const banBtn = u.is_banned
+                        ? '<button class="btn btn-sm btn-icon-sm btn-success" title="Blokdan chiqarish" onclick="adminToggleBan(' + b.id + ',' + u.id + ',false)">' + I.check + '</button>'
+                        : '<button class="btn btn-sm btn-icon-sm btn-danger" title="Bloklash" onclick="adminToggleBan(' + b.id + ',' + u.id + ',true)">' + I.xC + '</button>';
+                    return '<div class="list-item" style="align-items:center;gap:10px">'
                         + '<div class="thumb"><img src="/api/photo/user/' + u.telegram_id + '?bot=' + b.id + '" onerror="this.parentElement.innerHTML=&quot;' + escapeAttr(I.user) + '&quot;"></div>'
                         + '<div class="body"><div class="row1">'
                         + escape(u.full_name || ('user_' + u.telegram_id))
@@ -1763,7 +1782,9 @@ function renderModal(d, movies, users, channels) {
                         + '<span>ID: ' + u.telegram_id + '</span>'
                         + (u.username ? '<span>@' + u.username + '</span>' : '')
                         + '<span>' + fmtRel(u.created_at) + '</span>'
-                        + '</div></div></div>';
+                        + '</div></div>'
+                        + '<div style="flex-shrink:0">' + banBtn + '</div>'
+                        + '</div>';
                 }).join('')
             }
         </div>
@@ -1771,17 +1792,35 @@ function renderModal(d, movies, users, channels) {
 
     const channelsTab = `
         <div class="mtab-content" id="mtab-channels">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;flex-wrap:wrap">
+                <div style="font-size:12.5px;color:var(--text-3)">Botning majburiy obuna kanallari</div>
+                <button class="btn btn-sm btn-primary" onclick="showAddChannelInline(${b.id})">${I.plus} Kanal qo&apos;shish</button>
+            </div>
+            <div id="ch-inline-form-${b.id}"></div>
             ${channels.length === 0
                 ? '<div class="empty"><div class="ic-big">' + I.tv + '</div><div class="text">Hali kanal qo&apos;shilmagan</div></div>'
                 : channels.map(c => {
-                    return '<div class="list-item">'
-                        + '<div class="thumb">' + I.tv + '</div>'
+                    const cleanId = String(c.channel_id || '').replace(/^@/, '');
+                    const channelLookup = c.channel_username || cleanId;
+                    const photo = '<img src="/api/photo/channel/' + encodeURIComponent(channelLookup) + '?bot=' + b.id + '" onerror="this.parentElement.innerHTML=&quot;' + escapeAttr(I.tv) + '&quot;">';
+                    const toggleBtn = c.is_active
+                        ? '<button class="btn btn-sm btn-icon-sm btn-warn" title="Pauza" onclick="adminToggleChannel(' + b.id + ',' + c.id + ',false)">' + I.pause + '</button>'
+                        : '<button class="btn btn-sm btn-icon-sm btn-success" title="Yoqish" onclick="adminToggleChannel(' + b.id + ',' + c.id + ',true)">' + I.play + '</button>';
+                    return '<div class="list-item" style="align-items:center;gap:10px">'
+                        + '<div class="thumb">' + photo + '</div>'
                         + '<div class="body"><div class="row1">' + escape(c.channel_title || c.channel_username || c.channel_id)
                         + (c.is_active ? ' <span class="badge badge-active">aktiv</span>' : ' <span class="badge badge-expired">o&apos;chiq</span>')
                         + '</div><div class="row2">'
                         + '<span>' + (c.channel_username ? '@' + c.channel_username : c.channel_id) + '</span>'
                         + '<span>' + I.users + formatNum(c.bot_users_count || 0) + '</span>'
-                        + '</div></div></div>';
+                        + (c.invite_link ? '<span style="color:#34d399">🔗 link</span>' : '<span style="color:#fbbf24">⚠️ link yo&apos;q</span>')
+                        + '</div></div>'
+                        + '<div style="display:flex;gap:6px;flex-shrink:0">'
+                        + toggleBtn
+                        + '<button class="btn btn-sm btn-icon-sm btn-secondary" title="Tahrirlash" onclick="adminEditChannel(' + b.id + ',' + c.id + ',' + escapeAttr(JSON.stringify(c).replace(/"/g, '&quot;')) + ')">' + I.edit + '</button>'
+                        + '<button class="btn btn-sm btn-icon-sm btn-danger" title="O&apos;chirish" onclick="adminDeleteChannel(' + b.id + ',' + c.id + ')">' + I.trash + '</button>'
+                        + '</div>'
+                        + '</div>';
                 }).join('')
             }
         </div>
@@ -1825,6 +1864,176 @@ function switchMtab(e, name) {
 function closeModal() {
     document.getElementById('botModal').classList.remove('active');
     document.body.style.overflow = '';
+}
+
+// =========================================================
+// BOT ICHIDA ADMIN ACTIONS (movies/users/channels CRUD)
+// =========================================================
+const ADMIN_API = '/api/admin';
+let _modalBotId = null; // Hozir ochilgan bot modal ID si
+
+async function adminTogglePremiere(botId, movieId, makePremiere) {
+    const res = await fetch(ADMIN_API + '/movies/' + movieId + '/premiere', {
+        method: 'PATCH',
+        headers: adminHeaders(botId),
+        body: JSON.stringify({ is_premiere: makePremiere }),
+    });
+    const j = await res.json();
+    if (j.success || res.ok) {
+        toast(makePremiere ? 'Premyera qo\'shildi' : 'Premyeradan olib tashlandi');
+        await openBotModal(botId);
+        loadBots();
+    } else {
+        toast(j.message || 'Xato', 'error');
+    }
+}
+
+async function adminDeleteMovie(botId, movieId) {
+    if (!confirm('Bu kinoni o\'chirasizmi?')) return;
+    const res = await fetch(ADMIN_API + '/movies/' + movieId, {
+        method: 'DELETE',
+        headers: adminHeaders(botId),
+    });
+    if (res.ok) {
+        toast('Kino o\'chirildi');
+        await openBotModal(botId);
+        loadBots();
+    } else {
+        const j = await res.json().catch(() => ({}));
+        toast(j.message || 'Xato', 'error');
+    }
+}
+
+async function adminToggleBan(botId, userId, ban) {
+    const res = await fetch(ADMIN_API + '/users/' + userId + '/ban', {
+        method: 'PATCH',
+        headers: adminHeaders(botId),
+        body: JSON.stringify({ isBanned: ban }),
+    });
+    if (res.ok) {
+        toast(ban ? 'Bloklandi' : 'Blokdan chiqarildi');
+        await openBotModal(botId);
+    } else {
+        const j = await res.json().catch(() => ({}));
+        toast(j.message || 'Xato', 'error');
+    }
+}
+
+async function adminToggleChannel(botId, channelId, active) {
+    const res = await fetch(ADMIN_API + '/channels/' + channelId, {
+        method: 'PATCH',
+        headers: adminHeaders(botId),
+        body: JSON.stringify({ is_active: active }),
+    });
+    if (res.ok) {
+        toast(active ? 'Yoqildi' : 'Pauza qilindi');
+        await openBotModal(botId);
+    } else {
+        const j = await res.json().catch(() => ({}));
+        toast(j.message || 'Xato', 'error');
+    }
+}
+
+async function adminDeleteChannel(botId, channelId) {
+    if (!confirm('Bu kanalni o\'chirasizmi?')) return;
+    const res = await fetch(ADMIN_API + '/channels/' + channelId, {
+        method: 'DELETE',
+        headers: adminHeaders(botId),
+    });
+    if (res.ok) {
+        toast('Kanal o\'chirildi');
+        await openBotModal(botId);
+        loadBots();
+    } else {
+        const j = await res.json().catch(() => ({}));
+        toast(j.message || 'Xato', 'error');
+    }
+}
+
+// Kanalni inline tahrirlash — title, username, invite_link
+function adminEditChannel(botId, channelId, channelJson) {
+    // channelJson — &quot; bilan escape qilingan JSON string
+    let c;
+    try {
+        c = JSON.parse(String(channelJson).replace(/&quot;/g, '"'));
+    } catch { c = {}; }
+
+    const title = prompt('Kanal nomi:', c.channel_title || '');
+    if (title === null) return;
+    const link = prompt('Invite link (yopiq kanal uchun):\nMisol: https://t.me/+ABCD...', c.invite_link || '');
+    if (link === null) return;
+    const username = prompt('@username (ochiq kanal uchun):', c.channel_username || '');
+    if (username === null) return;
+
+    fetch(ADMIN_API + '/channels/' + channelId, {
+        method: 'PUT',
+        headers: adminHeaders(botId),
+        body: JSON.stringify({
+            channel_title: title.trim() || null,
+            invite_link: link.trim() || null,
+            channel_username: username.trim().replace(/^@/, '') || null,
+        }),
+    }).then(r => r.json()).then(j => {
+        if (j.success || j.data) {
+            toast('Kanal yangilandi');
+            openBotModal(botId);
+        } else {
+            toast(j.message || 'Xato', 'error');
+        }
+    }).catch(() => toast('Tarmoq xatosi', 'error'));
+}
+
+function showAddChannelInline(botId) {
+    const wrap = document.getElementById('ch-inline-form-' + botId);
+    if (!wrap) return;
+    wrap.innerHTML = `
+        <div class="card" style="margin-bottom:12px;padding:14px">
+            <div class="form-grid">
+                <div class="full">
+                    <label class="field-label">Kanal ID yoki @username <span class="req">*</span></label>
+                    <input type="text" id="ach-id-${botId}" placeholder="@channelname yoki -1001234567890">
+                </div>
+                <div class="full">
+                    <label class="field-label">Kanal nomi</label>
+                    <input type="text" id="ach-title-${botId}" placeholder="Kanal nomi (avto aniqlanadi)">
+                </div>
+                <div class="full">
+                    <label class="field-label">Invite link (yopiq kanal uchun)</label>
+                    <input type="text" id="ach-link-${botId}" placeholder="https://t.me/+ABCD...">
+                </div>
+                <div class="full" style="display:flex;gap:8px">
+                    <button class="btn btn-success" onclick="submitAddChannelInline(${botId})">${I.check} Qo'shish</button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('ch-inline-form-${botId}').innerHTML=''">${I.x} Bekor</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+async function submitAddChannelInline(botId) {
+    const chatId = document.getElementById('ach-id-' + botId).value.trim();
+    const title = document.getElementById('ach-title-' + botId).value.trim();
+    const link = document.getElementById('ach-link-' + botId).value.trim();
+    if (!chatId) return toast('Kanal ID kiriting', 'error');
+
+    const body = { channel_id: chatId, is_active: true };
+    if (chatId.startsWith('@')) body.channel_username = chatId.substring(1);
+    if (title) body.channel_title = title;
+    if (link) body.invite_link = link;
+
+    const res = await fetch(ADMIN_API + '/channels', {
+        method: 'POST',
+        headers: adminHeaders(botId),
+        body: JSON.stringify(body),
+    });
+    const j = await res.json();
+    if (j.success || j.data) {
+        toast('Kanal qo\'shildi');
+        await openBotModal(botId);
+        loadBots();
+    } else {
+        toast(j.message || 'Xato', 'error');
+    }
 }
 
 // ACTIONS
