@@ -1040,24 +1040,24 @@
         </div>
         <div class="nav-section-label">Asosiy</div>
         <nav class="nav">
-            <div class="nav-item active" data-page="dashboard" onclick="goPage('dashboard')">
+            <div class="nav-item active" data-nav="dashboard" onclick="goNav('dashboard')">
                 <svg class="ic"><use href="#i-grid"/></svg><span>Dashboard</span>
             </div>
-            <div class="nav-item" data-page="bots" onclick="goPage('bots')">
+            <div class="nav-item" data-nav="bots" onclick="goNav('bots')">
                 <svg class="ic"><use href="#i-bot"/></svg><span>Botlar</span>
                 <span class="badge-pill" id="navBotsCount">0</span>
             </div>
-            <div class="nav-item warn" data-page="bots" onclick="goPage('bots'); setFilter('expiring')">
+            <div class="nav-item warn" data-nav="expiring" onclick="goNav('expiring')">
                 <svg class="ic"><use href="#i-alert-triangle"/></svg><span>Tez tugaydi</span>
                 <span class="badge-pill" id="navExpiring">0</span>
             </div>
         </nav>
         <div class="nav-section-label">Boshqaruv</div>
         <nav class="nav">
-            <div class="nav-item" data-page="add" onclick="goPage('add')">
+            <div class="nav-item" data-nav="add" onclick="goNav('add')">
                 <svg class="ic"><use href="#i-plus"/></svg><span>Yangi bot</span>
             </div>
-            <div class="nav-item" data-page="system" onclick="goPage('system')">
+            <div class="nav-item" data-nav="system" onclick="goNav('system')">
                 <svg class="ic"><use href="#i-server"/></svg><span>Server</span>
             </div>
         </nav>
@@ -1217,16 +1217,16 @@
 
     <!-- MOBILE BOTTOM NAV -->
     <div class="bottom-nav">
-        <div class="bnav-item active" data-page="dashboard" onclick="goPage('dashboard')">
+        <div class="bnav-item active" data-nav="dashboard" onclick="goNav('dashboard')">
             <svg class="ic"><use href="#i-grid"/></svg><span>Dashboard</span>
         </div>
-        <div class="bnav-item" data-page="bots" onclick="goPage('bots')">
+        <div class="bnav-item" data-nav="bots" onclick="goNav('bots')">
             <svg class="ic"><use href="#i-bot"/></svg><span>Botlar</span>
         </div>
-        <div class="bnav-item" data-page="add" onclick="goPage('add')">
+        <div class="bnav-item" data-nav="add" onclick="goNav('add')">
             <svg class="ic"><use href="#i-plus"/></svg><span>Yangi</span>
         </div>
-        <div class="bnav-item" data-page="system" onclick="goPage('system')">
+        <div class="bnav-item" data-nav="system" onclick="goNav('system')">
             <svg class="ic"><use href="#i-server"/></svg><span>Server</span>
         </div>
     </div>
@@ -1358,21 +1358,39 @@ function showLogin() {
     document.getElementById('loginOverlay').style.display = 'flex';
 }
 
-// NAV
-function goPage(name) {
+// NAV — sidebar/bottom nav navigation
+// "expiring" maxsus holatda — botlar sahifasi + expiring filter
+function goNav(navKey) {
+    // navKey -> page mapping
+    const pageMap = { dashboard: 'dashboard', bots: 'bots', expiring: 'bots', add: 'add', system: 'system' };
+    const page = pageMap[navKey] || navKey;
+
+    // sahifani almashtirish
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-' + name)?.classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    document.querySelectorAll('.nav-item[data-page="' + name + '"]').forEach(i => i.classList.add('active'));
-    document.querySelectorAll('.bnav-item').forEach(i => i.classList.remove('active'));
-    document.querySelectorAll('.bnav-item[data-page="' + name + '"]').forEach(i => i.classList.add('active'));
+    document.getElementById('page-' + page)?.classList.add('active');
+
+    // sidebar/bottom nav highlight (data-nav atributiga qarab)
+    document.querySelectorAll('.nav-item, .bnav-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('[data-nav="' + navKey + '"]').forEach(i => i.classList.add('active'));
+
+    // Maxsus filtr — "Tez tugaydi" bosilsa, expiring filtri qo'llanadi
+    if (navKey === 'expiring') {
+        setFilter('expiring', false);
+    } else if (page === 'bots' && navKey === 'bots') {
+        setFilter('all', false);
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function setFilter(f) {
+// Eski xatolarni oldini olish uchun alias
+function goPage(name) { goNav(name); }
+
+function setFilter(f, scroll = true) {
     currentFilter = f;
     document.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p.dataset.filter === f));
     renderBots();
+    if (scroll === false) return;
 }
 
 // INIT
