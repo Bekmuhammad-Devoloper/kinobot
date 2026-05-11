@@ -711,13 +711,20 @@
             border: 1px solid var(--border-strong);
             border-radius: var(--radius-xl);
             width: 100%; max-width: 820px;
-            max-height: 92vh; overflow: hidden;
+            /* Sobit balandlik — tablar almashganda modal o'lchami o'zgarmaydi */
+            height: 85vh;
+            max-height: 760px;
+            overflow: hidden;
             display: flex; flex-direction: column;
             box-shadow: var(--shadow-lg);
             animation: modal-in .3s cubic-bezier(.21,1.02,.73,1);
         }
         @media (max-width: 640px) {
-            .modal { max-height: 95vh; border-radius: 22px 22px 0 0; }
+            .modal {
+                height: 92vh;
+                max-height: none;
+                border-radius: 22px 22px 0 0;
+            }
         }
         @keyframes modal-in {
             from { transform: translateY(40px) scale(.96); opacity: 0; }
@@ -1696,7 +1703,7 @@ function renderModal(d, movies, users, channels) {
             <div class="name-block">
                 <div class="name-row">${escape(b.name)} ${statusBadge(b)}</div>
                 <div class="name-sub">
-                    ${b.username ? '<span>' + I.at + '@' + b.username + '</span>' : ''}
+                    ${b.username ? '<span>' + I.at + b.username + '</span>' : ''}
                     ${b.owner_full_name ? '<span>' + I.user + escape(b.owner_full_name) + '</span>' : ''}
                 </div>
             </div>
