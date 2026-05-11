@@ -216,12 +216,29 @@ export class TelegramService {
 
     for (const channel of channels) {
       try {
-        const member = await tg.telegram.getChatMember(channel.channel_id, telegramId);
+        // Telegram API uchun chat ID ni to'g'ri formatga keltirish.
+        // Raqamli ID ("-100...") string emas, number bo'lishi kerak.
+        const cid: any = /^-?\d+$/.test(channel.channel_id)
+          ? parseInt(channel.channel_id)
+          : channel.channel_id;
+
+        const member = await tg.telegram.getChatMember(cid, telegramId);
         if (!['member', 'administrator', 'creator'].includes(member.status)) {
           unsubscribedChannels.push(channel);
         }
       } catch (error) {
-        unsubscribedChannels.push(channel);
+        // Bot kanalga ulanaolmasa (bot kanalda emas, kanal o'chirilgan, va h.k.)
+        // — bu kanal foydalanuvchini bloklatmasin. Skip qilamiz.
+        const msg = (error?.message || '').toLowerCase();
+        const isAccessError =
+          msg.includes('chat not found') ||
+          msg.includes('bot is not a member') ||
+          msg.includes("can't be a member") ||
+          msg.includes('user not found');
+        if (!isAccessError) {
+          unsubscribedChannels.push(channel);
+        }
+        // Aks holda bu kanal'ni tekshirib bo'lmadi — sukut bilan o'tkazamiz
       }
     }
 
