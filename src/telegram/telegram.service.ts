@@ -212,44 +212,54 @@ export class TelegramService {
 
   async checkUserSubscription(botId: number, tg: Telegraf, telegramId: number): Promise<{ subscribed: boolean; unsubscribedChannels: Channel[] }> {
     const channels = await this.getActiveChannels(botId);
-    const unsubscribedChannels: Channel[] = [];
+    if (channels.length === 0) {
+      return { subscribed: true, unsubscribedChannels: [] };
+    }
+
+    // Bot uchun "tekshirib bo'ladigan" kanallar — bot a'zo bo'lib obunani tekshira oladi.
+    // Bot kira olmaydigan kanallar foydalanuvchini bloklatmaydi (sukut bilan o'tkaziladi).
+    let verifiableUnsubscribed = 0;
+    let verifiableTotal = 0;
+
+    const VALID_STATUS = ['member', 'administrator', 'creator', 'restricted'];
 
     for (const channel of channels) {
       try {
         // Telegram API uchun chat ID ni to'g'ri formatga keltirish.
-        // Raqamli ID ("-100...") string emas, number bo'lishi kerak.
+        // Raqamli ID ("-100...") number bo'lishi kerak.
         const cid: any = /^-?\d+$/.test(channel.channel_id)
           ? parseInt(channel.channel_id)
           : channel.channel_id;
 
         const member = await tg.telegram.getChatMember(cid, telegramId);
-        if (!['member', 'administrator', 'creator'].includes(member.status)) {
-          unsubscribedChannels.push(channel);
+        verifiableTotal++;
+        if (!VALID_STATUS.includes(member.status)) {
+          verifiableUnsubscribed++;
         }
       } catch (error) {
         // Bot kanalga ulanaolmasa (bot kanalda emas, kanal o'chirilgan, va h.k.)
-        // — bu kanal foydalanuvchini bloklatmasin. Skip qilamiz.
-        const msg = (error?.message || '').toLowerCase();
-        const isAccessError =
-          msg.includes('chat not found') ||
-          msg.includes('bot is not a member') ||
-          msg.includes("can't be a member") ||
-          msg.includes('user not found');
-        if (!isAccessError) {
-          unsubscribedChannels.push(channel);
-        }
-        // Aks holda bu kanal'ni tekshirib bo'lmadi — sukut bilan o'tkazamiz
+        // — bu kanal foydalanuvchini bloklatmasin. Sukut bilan o'tkaziladi.
+        console.warn(
+          `Subscription check skipped for channel ${channel.channel_id}: ${error?.message || error}`,
+        );
       }
     }
 
-    const subscribed = unsubscribedChannels.length === 0;
+    // User obuna deb hisoblanadi: agar barcha verifiable kanallarga obuna bo'lsa.
+    // Verifiable kanal yo'q bo'lsa — bot tekshira olmaydi va foydalanuvchini bloklamaymiz.
+    const subscribed = verifiableUnsubscribed === 0;
 
     await this.userRepo.update(
       { bot_id: botId, telegram_id: telegramId },
       { is_subscribed: subscribed, last_subscription_check: new Date() }
     );
 
-    return { subscribed, unsubscribedChannels };
+    // Display uchun: agar obuna bo'lmagan bo'lsa, BARCHA aktiv kanallarni ko'rsatamiz
+    // (shu jumladan bot kira olmaydigan kanallar — foydalanuvchi obuna bo'lishi uchun).
+    return {
+      subscribed,
+      unsubscribedChannels: subscribed ? [] : channels,
+    };
   }
 
   // ============ MOVIE METHODS ============
