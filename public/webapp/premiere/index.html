@@ -500,6 +500,12 @@
     </div>
 </div>
 
-<script src="/webapp/js/premiere.js"></script>
+<script>
+// Cache-busting: har 60 daqiqada fresh JS yuklanadi
+(function() {
+    var v = Math.floor(Date.now() / 3600000);
+    document.write('<script src="/webapp/js/premiere.js?v=' + v + '"><\/script>');
+})();
+</script>
 </body>
 </html>

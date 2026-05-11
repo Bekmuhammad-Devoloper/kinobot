@@ -6,6 +6,7 @@ import { BotsService } from './bots.service';
 import { BotsController } from './bots.controller';
 import { SuperAdminAuthController } from './super-admin-auth.controller';
 import { SystemInfoService } from './system-info.service';
+import { CleanupService } from './cleanup.service';
 import { TelegramModule } from '../telegram/telegram.module';
 
 @Module({
@@ -13,7 +14,7 @@ import { TelegramModule } from '../telegram/telegram.module';
     TypeOrmModule.forFeature([BotEntity, User, Movie, Channel, UserView]),
     forwardRef(() => TelegramModule),
   ],
-  providers: [BotManagerService, BotsService, SystemInfoService],
+  providers: [BotManagerService, BotsService, SystemInfoService, CleanupService],
   controllers: [BotsController, SuperAdminAuthController],
   exports: [BotManagerService, BotsService],
 })

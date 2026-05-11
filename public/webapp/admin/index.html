@@ -638,6 +638,11 @@
         </div>
     </div>
 
-    <script src="/webapp/js/admin.js"></script>
+    <script>
+    (function() {
+        var v = Math.floor(Date.now() / 3600000);
+        document.write('<script src="/webapp/js/admin.js?v=' + v + '"><\/script>');
+    })();
+    </script>
 </body>
 </html>
