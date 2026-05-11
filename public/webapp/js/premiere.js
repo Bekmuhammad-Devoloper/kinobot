@@ -70,17 +70,21 @@ function cardHtml(m, index) {
     const isTop = index < 3;
     const isNew = movieIsNew(m);
     const delay = Math.min(index * 0.04, 0.6);
-    const gradStyle = generateGradient(m);
+    const grad = generateGradientValue(m); // faqat gradient string (`linear-gradient(...)`)
 
     // Thumbnail varianti
+    // Muhim: `background:` shorthand `background-image` ni o'chirib yuboradi.
+    // Shuning uchun thumbnail bor bo'lsa, FAQAT background-image va background-color (gradient fallback) o'rnatamiz.
     let thumbHtml;
     if (m.thumbnailFileId) {
         thumbHtml = `
-            <div class="card-image" style="background-image: url('${m.thumbnailFileId}'); ${gradStyle}"></div>
+            <div class="card-image"
+                 style="background-image: url('${m.thumbnailFileId}'); background-size: cover; background-position: center; background-color: #1e293b;">
+            </div>
         `;
     } else {
         thumbHtml = `
-            <div class="card-image" style="${gradStyle}"></div>
+            <div class="card-image" style="background: ${grad};"></div>
             <div class="card-fallback">
                 <span class="big-emoji">🎬</span>
                 <span class="fb-title">${escapeHtml(m.title)}</span>
@@ -118,7 +122,7 @@ function cardHtml(m, index) {
     `;
 }
 
-function generateGradient(m) {
+function generateGradientValue(m) {
     // Movie code'dan deterministic gradient — har kino uchun bir xil rang
     const code = (m.code || m.title || 'X').toString();
     let hash = 0;
@@ -137,7 +141,7 @@ function generateGradient(m) {
         'linear-gradient(135deg, #6366f1, #06b6d4)',  // indigo-cyan
     ];
     const idx = Math.abs(hash) % palettes.length;
-    return `background: ${palettes[idx]};`;
+    return palettes[idx];
 }
 
 function movieIsNew(m) {
@@ -152,14 +156,16 @@ function openModal(id) {
 
     const m = selectedMovie;
     const hero = document.getElementById('modalHero');
-    const gradStyle = generateGradient(m);
+    const grad = generateGradientValue(m);
 
     let heroContent = '';
     if (m.thumbnailFileId) {
-        heroContent = `<div class="hero-img" style="background-image: url('${m.thumbnailFileId}'); ${gradStyle}"></div>`;
+        heroContent = `<div class="hero-img"
+                            style="background-image: url('${m.thumbnailFileId}'); background-size: cover; background-position: center; background-color: #1e293b;">
+                       </div>`;
     } else {
         heroContent = `
-            <div class="hero-img" style="${gradStyle}"></div>
+            <div class="hero-img" style="background: ${grad};"></div>
             <div class="hero-fb">🎬</div>
         `;
     }
