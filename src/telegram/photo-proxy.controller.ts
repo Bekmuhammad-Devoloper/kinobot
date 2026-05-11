@@ -2,7 +2,7 @@ import { Controller, Get, Param, Query, Res, Header } from '@nestjs/common';
 import { Response } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Bot as BotEntity } from '../database/entities';
+import { Bot as BotEntity, Channel } from '../database/entities';
 import { TelegramService } from './telegram.service';
 import { BotManagerService } from '../bots/bot-manager.service';
 
@@ -12,7 +12,16 @@ export class PhotoProxyController {
     private readonly telegramService: TelegramService,
     private readonly botManager: BotManagerService,
     @InjectRepository(BotEntity) private readonly botRepo: Repository<BotEntity>,
+    @InjectRepository(Channel) private readonly channelRepo: Repository<Channel>,
   ) {}
+
+  // Telegram chat ID ni to'g'ri formatga keltirish (raqamlilar number bo'lishi kerak)
+  private normalizeChatId(channelId: string): string | number {
+    const s = channelId.trim();
+    if (/^-?\d+$/.test(s)) return parseInt(s);
+    if (s.startsWith('@')) return s;
+    return '@' + s;
+  }
 
   @Get('bot/:botId')
   @Header('Cache-Control', 'public, max-age=3600')
@@ -96,13 +105,27 @@ export class PhotoProxyController {
     @Res() res: Response,
   ) {
     try {
-      let formatted = channelId;
-      if (!channelId.startsWith('@') && !channelId.startsWith('-')) {
-        formatted = '@' + channelId;
-      }
       const tg = this.resolveTg(botId);
       if (!tg) return res.status(404).json({ error: 'Bot unavailable' });
-      const photoBuffer = await this.telegramService.getChannelPhotoBuffer(tg, formatted);
+
+      // 1) Avval DB'dagi keshlangan photo_file_id'ni sinaymiz (eng tezkor)
+      const bid = botId ? parseInt(botId) : undefined;
+      if (bid) {
+        const ch = await this.channelRepo.findOne({
+          where: [{ bot_id: bid, channel_id: channelId }, { bot_id: bid, channel_username: channelId }],
+        });
+        if (ch?.photo_file_id) {
+          const buf = await this.telegramService.getFileBuffer(tg, ch.photo_file_id);
+          if (buf) {
+            res.set('Content-Type', 'image/jpeg');
+            return res.send(buf);
+          }
+        }
+      }
+
+      // 2) Aks holda Telegram'dan getChat orqali tortib olamiz
+      const formatted = this.normalizeChatId(channelId);
+      const photoBuffer = await this.telegramService.getChannelPhotoBuffer(tg, formatted as any);
       if (photoBuffer) {
         res.set('Content-Type', 'image/jpeg');
         res.send(photoBuffer);

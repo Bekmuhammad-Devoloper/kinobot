@@ -3,11 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Channel } from '../database/entities';
 import { CreateChannelDto, UpdateChannelDto } from './dto';
+import { BotManagerService } from '../bots/bot-manager.service';
 
 @Injectable()
 export class ChannelsService {
   constructor(
     @InjectRepository(Channel) private readonly channelRepo: Repository<Channel>,
+    private readonly botManager: BotManagerService,
   ) {}
 
   async findAll(botId: number): Promise<Channel[]> {
@@ -30,7 +32,41 @@ export class ChannelsService {
   }
 
   async create(botId: number, dto: CreateChannelDto): Promise<Channel> {
-    const channel = this.channelRepo.create({ ...dto, bot_id: botId });
+    // Telegram'dan kanal ma'lumotlarini avto-tortib olamiz (avatar, nom, invite link)
+    const enriched = { ...dto } as Partial<Channel>;
+
+    const tg = this.botManager.getTelegraf(botId);
+    if (tg && dto.channel_id) {
+      try {
+        const cid = this.normalizeChatId(dto.channel_id);
+        const chat: any = await tg.telegram.getChat(cid);
+
+        if (chat?.title) enriched.channel_title = enriched.channel_title || chat.title;
+        if (chat?.username) enriched.channel_username = enriched.channel_username || chat.username;
+        if (chat?.photo?.big_file_id) enriched.photo_file_id = chat.photo.big_file_id;
+
+        // Agar kanal yopiq (username yo'q) va invite_link berilmagan bo'lsa,
+        // bot orqali avto invite link yaratamiz.
+        if (!enriched.invite_link && !chat?.username) {
+          try {
+            const link = await tg.telegram.createChatInviteLink(cid, {
+              name: 'Kinobot obuna',
+              creates_join_request: false,
+            } as any);
+            if (link?.invite_link) enriched.invite_link = link.invite_link;
+          } catch (e) {
+            // Bot adminlik huquqi yo'q bo'lsa yoki getChat'dan link bor bo'lsa
+            if ((chat as any)?.invite_link) {
+              enriched.invite_link = (chat as any).invite_link;
+            }
+          }
+        }
+      } catch (e) {
+        console.error(`Failed to enrich channel ${dto.channel_id}:`, e?.message || e);
+      }
+    }
+
+    const channel = this.channelRepo.create({ ...enriched, bot_id: botId });
     return this.channelRepo.save(channel);
   }
 
@@ -50,5 +86,16 @@ export class ChannelsService {
       await this.channelRepo.save(channel);
     }
     return channel;
+  }
+
+  // Telegram API uchun chat ID ni to'g'ri formatlash:
+  // "-1002478148711" -> -1002478148711 (number)
+  // "@channelname" -> "@channelname"
+  // "channelname" -> "@channelname"
+  private normalizeChatId(channelId: string): string | number {
+    const s = channelId.trim();
+    if (/^-?\d+$/.test(s)) return parseInt(s);
+    if (s.startsWith('@')) return s;
+    return '@' + s;
   }
 }

@@ -25,6 +25,9 @@ export class Channel {
   @Column({ type: 'text', nullable: true })
   photo_url: string;
 
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  photo_file_id: string;
+
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
 

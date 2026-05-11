@@ -19,12 +19,30 @@ export const UserKeyboard = {
 
   // Majburiy obuna tugmalari
   subscriptionButtons: (channels: Channel[]) => {
-    const urlButtons = channels.map((channel) => [
-      Markup.button.url(
-        `📢 ${channel.channel_title || channel.channel_username}`,
-        channel.invite_link || `https://t.me/${channel.channel_username?.replace('@', '')}`
-      ),
-    ]);
+    const buildUrl = (c: Channel): string | null => {
+      // Birinchi navbatda invite_link (private kanal uchun)
+      if (c.invite_link) return c.invite_link;
+      // Username bo'lsa — t.me/username
+      if (c.channel_username) {
+        return `https://t.me/${c.channel_username.replace(/^@/, '')}`;
+      }
+      // channel_id @username ko'rinishida bo'lsa
+      if (c.channel_id && c.channel_id.startsWith('@')) {
+        return `https://t.me/${c.channel_id.replace(/^@/, '')}`;
+      }
+      // Boshqa hech narsa yo'q — bu yopiq kanal uchun, link kerak (NULL)
+      return null;
+    };
+
+    const urlButtons = channels
+      .map((channel) => {
+        const url = buildUrl(channel);
+        if (!url) return null; // tugma ko'rsatmaslik
+        const title = channel.channel_title || channel.channel_username || channel.channel_id || 'Kanal';
+        return [Markup.button.url(`📢 ${title}`, url)];
+      })
+      .filter((b) => b !== null) as any[];
+
     const checkButton = [[Markup.button.callback('✅ Tekshirish', 'check_subscription')]];
     return Markup.inlineKeyboard([...urlButtons, ...checkButton]);
   },

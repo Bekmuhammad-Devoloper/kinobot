@@ -52,16 +52,16 @@ export class TelegramService {
     return null;
   }
 
-  async getChannelPhotoBuffer(tg: Telegraf, channelId: string): Promise<Buffer | null> {
+  async getChannelPhotoBuffer(tg: Telegraf, channelId: string | number): Promise<Buffer | null> {
     try {
-      const chat = await tg.telegram.getChat(channelId);
+      const chat = await tg.telegram.getChat(channelId as any);
       if ((chat as any).photo) {
         const fileLink = await tg.telegram.getFileLink((chat as any).photo.big_file_id);
         const response = await axios.get(fileLink.toString(), { responseType: 'arraybuffer' });
         return Buffer.from(response.data);
       }
     } catch (error) {
-      console.error('Error getting channel photo buffer:', error);
+      console.error('Error getting channel photo buffer:', error?.message || error);
     }
     return null;
   }
