@@ -322,9 +322,15 @@ function renderChannels() {
                         </div>
                     </div>
                     <div class="channel-actions">
+                        <button class="btn btn-icon" onclick='showEditChannelModal(${JSON.stringify(channel)})' title="Tahrirlash">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                        </button>
                         <button class="btn btn-icon" onclick="toggleChannel(${channel.id}, ${!isActive})" title="${isActive ? 'O\'chirish' : 'Yoqish'}">
-                            ${isActive ? 
-                                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>' : 
+                            ${isActive ?
+                                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>' :
                                 '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>'
                             }
                         </button>
@@ -403,17 +409,23 @@ function showAddChannelModal() {
                 <button class="modal-close" onclick="closeAddChannelModal()">✕</button>
             </div>
             <div class="modal-body">
+                <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);padding:10px 12px;border-radius:10px;font-size:12.5px;color:#a8b2d1;margin-bottom:14px;line-height:1.5">
+                    💡 <b>Eslatma:</b><br>
+                    • <b>Ochiq kanal</b> — @username yoki -100... ID kifoya.<br>
+                    • <b>Yopiq kanal</b> — bot avval kanalda admin qilib qo'shilishi kerak. Aks holda invite link maydonini qo'lda to'ldiring.
+                </div>
                 <div class="form-group">
-                    <label>Kanal nomi</label>
+                    <label>Kanal nomi <span style="color:#f87171">*</span></label>
                     <input type="text" id="channel-title" class="form-input" placeholder="Masalan: Kino Kanal">
                 </div>
                 <div class="form-group">
-                    <label>Kanal ID yoki username</label>
-                    <input type="text" id="channel-id" class="form-input" placeholder="Masalan: @kinokanal yoki -1001234567890">
+                    <label>Kanal ID yoki @username <span style="color:#f87171">*</span></label>
+                    <input type="text" id="channel-id" class="form-input" placeholder="@kinokanal yoki -1001234567890">
                 </div>
                 <div class="form-group">
-                    <label>Kanal havola (ixtiyoriy)</label>
-                    <input type="text" id="channel-url" class="form-input" placeholder="https://t.me/kinokanal">
+                    <label>Invite link (yopiq kanal uchun)</label>
+                    <input type="text" id="channel-url" class="form-input" placeholder="https://t.me/+ABCD... yoki https://t.me/joinchat/...">
+                    <div style="font-size:11px;color:#6b7895;margin-top:4px">Ochiq kanal bo'lsa, bo'sh qoldiring</div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -428,6 +440,104 @@ function showAddChannelModal() {
 function closeAddChannelModal() {
     const modal = document.getElementById('add-channel-modal');
     if (modal) modal.remove();
+}
+
+// =========== EDIT CHANNEL MODAL ===========
+function showEditChannelModal(channel) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+    modal.id = 'edit-channel-modal';
+    const cid = channel.id;
+    const title = channel.channel_title || '';
+    const channelId = channel.channel_id || '';
+    const username = channel.channel_username || '';
+    const link = channel.invite_link || '';
+    const hasLink = !!link;
+    const hasUsername = !!username;
+    const isPrivate = !hasUsername;
+
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                    Kanalni tahrirlash
+                </h3>
+                <button class="modal-close" onclick="closeEditChannelModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                ${isPrivate && !hasLink ? `
+                    <div style="background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.35);padding:10px 12px;border-radius:10px;font-size:12.5px;color:#fbbf24;margin-bottom:14px;line-height:1.5">
+                        ⚠️ <b>Diqqat:</b> bu yopiq kanal va invite link yo'q.
+                        Foydalanuvchilar obuna tugmasini ko'ra olmaydi — pastdagi maydonga link kiriting yoki botni kanalda admin qiling.
+                    </div>
+                ` : ''}
+                <div class="form-group">
+                    <label>Kanal nomi</label>
+                    <input type="text" id="edit-channel-title" class="form-input" value="${escapeHtml(title)}">
+                </div>
+                <div class="form-group">
+                    <label>Kanal ID / @username (o'zgartirish tavsiya etilmaydi)</label>
+                    <input type="text" id="edit-channel-id" class="form-input" value="${escapeHtml(channelId)}" disabled>
+                </div>
+                <div class="form-group">
+                    <label>@username</label>
+                    <input type="text" id="edit-channel-username" class="form-input" value="${escapeHtml(username)}" placeholder="username (without @)">
+                </div>
+                <div class="form-group">
+                    <label>Invite link</label>
+                    <input type="text" id="edit-channel-link" class="form-input" value="${escapeHtml(link)}" placeholder="https://t.me/+ABCD...">
+                    <div style="font-size:11px;color:#6b7895;margin-top:4px">Yopiq kanal uchun obuna tugmasi shu link orqali ochiladi</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditChannelModal()">Bekor qilish</button>
+                <button class="btn btn-primary" onclick="saveEditChannel(${cid})">💾 Saqlash</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function closeEditChannelModal() {
+    const modal = document.getElementById('edit-channel-modal');
+    if (modal) modal.remove();
+}
+
+async function saveEditChannel(id) {
+    const title = document.getElementById('edit-channel-title').value.trim();
+    let username = document.getElementById('edit-channel-username').value.trim();
+    if (username.startsWith('@')) username = username.substring(1);
+    const link = document.getElementById('edit-channel-link').value.trim();
+
+    try {
+        const response = await fetch(`${API_URL}/admin/channels/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-telegram-id': tg.initDataUnsafe?.user?.id?.toString() || '',
+                'x-bot-id': (BOT_ID || '').toString()
+            },
+            body: JSON.stringify({
+                channel_title: title || null,
+                channel_username: username || null,
+                invite_link: link || null,
+            })
+        });
+        const result = await response.json();
+        if (response.ok && result.success) {
+            closeEditChannelModal();
+            await loadChannels();
+            showToast('Kanal yangilandi');
+        } else {
+            showToast(result.message || 'Xato', 'error');
+        }
+    } catch (e) {
+        showToast('Tarmoq xatosi', 'error');
+    }
 }
 
 async function addChannel() {
